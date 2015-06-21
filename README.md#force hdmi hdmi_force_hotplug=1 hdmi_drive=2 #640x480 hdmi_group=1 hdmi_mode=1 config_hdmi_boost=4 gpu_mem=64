@@ -56,4 +56,18 @@ make install
 #make sure we have wlan drivers
 aptitude install wireless-tools firmware-ralink
 
+#add the following setup to /etc/network/interface
+auto wlan1
+iface wlan1 inet static
+  wireless-essid monster-mesh
+  wireless-mode Ad-Hoc
+  wireless-channel 1
+  address 192.168.0.0
+  netmask 255.255.0.0
+#then push it up
+ifup wlan1
+
+
+#this will hopefully start the mesh
+olsrd2_static --set interface.auto_ll4=true wlan1
 
