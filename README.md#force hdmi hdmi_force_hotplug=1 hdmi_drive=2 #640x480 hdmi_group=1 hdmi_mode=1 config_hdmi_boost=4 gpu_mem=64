@@ -31,7 +31,7 @@ nano /etc/kbd/config
 reboot
 
 #so we need a build environment as olsrd2 will be have to be built from source
-sudo aptitude install git gcc build-essential
+sudo aptitude install git gcc build-essential cmake
 
 #we are still in /root so grab the olsrd2 and build it
 git clone git://olsr.org/oonf.git
