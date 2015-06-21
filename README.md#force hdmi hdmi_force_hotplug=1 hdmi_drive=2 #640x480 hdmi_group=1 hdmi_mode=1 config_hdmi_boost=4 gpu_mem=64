@@ -1,0 +1,35 @@
+# monster-mesh
+
+```
+
+#start with a minibian http://sourceforge.net/projects/minibian/
+#minibian log in is root with a password of raspberry and a lot of things
+#are not installed. Also it is a 512mb partition so first thing is...
+
+#install raspi-config then run it so we can resize the partition and then reboot
+apt-get install raspi-config
+raspi-config
+reboot
+
+#now we have enough space to install other bits and bobs so install some general stuff
+apt-get install aptitude sudo nano byobu
+
+#now we can use nano
+nano /boot/config.txt
+# set the following in /boot/config.txt to force 640x480 hdmi output always
+hdmi_force_hotplug=1
+hdmi_drive=2
+hdmi_group=1
+hdmi_mode=1
+config_hdmi_boost=4
+
+# turn of screen blanking, make sure kbd is installed
+aptitude install kbd
+# and edit the following config to set BLANK_TIME=0
+nano /etc/kbd/config
+
+#then need to reboot again for the above to take effect
+reboot
+
+
+```
