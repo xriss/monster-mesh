@@ -48,7 +48,8 @@ aptitude install pkg-config libnl-genl-3-dev
 #we are still in /root so grab the olsrd2 and build it
 git clone git://olsr.org/oonf.git
 cd oonf/build
-cmake ..
+#need to ignore warning as there may be some
+cmake -D OONF_NO_WERROR=true ..
 make
 make install
 
