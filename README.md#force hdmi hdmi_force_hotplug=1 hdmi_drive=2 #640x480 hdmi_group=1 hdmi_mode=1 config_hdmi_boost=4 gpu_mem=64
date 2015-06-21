@@ -1,6 +1,5 @@
 # monster-mesh
 
-```
 
 #start with a minibian http://sourceforge.net/projects/minibian/
 #minibian log in is root with a password of raspberry and a lot of things
@@ -31,5 +30,6 @@ nano /etc/kbd/config
 #then need to reboot again for the above to take effect
 reboot
 
+#so we need a build environment as olsrd2 will be have to be built from source
+sudo aptitude install git gcc build-essential
 
-```
