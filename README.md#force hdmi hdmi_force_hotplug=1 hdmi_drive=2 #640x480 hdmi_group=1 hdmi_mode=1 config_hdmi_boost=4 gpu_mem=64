@@ -53,5 +53,7 @@ cmake -D OONF_NO_WERROR=true ..
 make
 make install
 
+#make sure we have wlan drivers
+aptitude install firmware-ralink
 
 
