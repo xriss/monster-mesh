@@ -39,8 +39,12 @@ cd cmake
 cmake .
 make
 make install
-cd ..
+reboot
+#need a reboot
 
+
+#more dependencies needed to build olsr2
+aptitude install pkg-config libnl-genl-3-dev
 #we are still in /root so grab the olsrd2 and build it
 git clone git://olsr.org/oonf.git
 cd oonf/build
