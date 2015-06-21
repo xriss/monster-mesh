@@ -54,6 +54,6 @@ make
 make install
 
 #make sure we have wlan drivers
-aptitude install firmware-ralink
+aptitude install wireless-tools firmware-ralink
 
 
