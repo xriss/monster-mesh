@@ -33,8 +33,20 @@ reboot
 #so we need a build environment as olsrd2 will be have to be built from source
 sudo aptitude install git gcc build-essential cmake
 
+#however that cmake is too old for olsrd2 so need to also build a newer one
+git clone git://cmake.org/cmake.git
+cd cmake
+cmake .
+make
+make install
+cd ..
+
 #we are still in /root so grab the olsrd2 and build it
 git clone git://olsr.org/oonf.git
+cd oonf/build
+cmake ..
+make
+make install
 
 
 
