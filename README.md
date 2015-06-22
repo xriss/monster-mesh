@@ -1,4 +1,4 @@
-Monster Mesh
+How to Monster Mesh
 ===================
 
 
@@ -9,6 +9,7 @@ http://sourceforge.net/projects/minibian/ (*512mb partition*)
 Login ```root```
 
 Password ```raspberry```
+
 
 Install and run **raspi-config** to resize the partition and then reboot.
 
@@ -122,7 +123,7 @@ ifup wlan1
 ```
 
 
-This will hopefully start the mesh!
+Finally, run the command below to (*hopefully*) start the mesh!
 
 ```
 olsrd2_static --set log.debug=auto_ll4 --set global.plugin=auto_ll4 wlan1
