@@ -69,6 +69,6 @@ ifup wlan1
 
 
 #this will hopefully start the mesh
-olsrd2_static --set log.debug=plugin --set global.plugin=auto_ll4 wlan1
+olsrd2_static --set log.debug=auto_ll4 --set global.plugin=auto_ll4 wlan1
 
 
