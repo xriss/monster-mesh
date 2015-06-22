@@ -1,62 +1,111 @@
-# monster-mesh
+Monster Mesh
+===================
 
 
-#start with a minibian http://sourceforge.net/projects/minibian/
-#minibian log in is root with a password of raspberry and a lot of things
-#are not installed. Also it is a 512mb partition so first thing is...
+Install and start **MINIBIAN**, a minimal Raspbian-based Linux image for Raspberry Pi.
 
-#install raspi-config then run it so we can resize the partition and then reboot
+http://sourceforge.net/projects/minibian/ (*512mb partition*)
+
+Login ```root```
+
+Password ```raspberry```
+
+Install and run **raspi-config** to resize the partition and then reboot.
+
+```
 apt-get install raspi-config
 raspi-config
 reboot
+```
 
-#now we have enough space to install other bits and bobs so install some general stuff
+Install **Byobu**.
+
+```
 apt-get install aptitude sudo nano byobu
+```
 
-#now we can use nano
+Now we can use **nano**
+
+```
 nano /boot/config.txt
-# set the following in /boot/config.txt to force 640x480 hdmi output always
+```
+
+Set the following in **/boot/config.txt** to force 640x480 hdmi output always.
+
+```
 hdmi_force_hotplug=1
 hdmi_drive=2
 hdmi_group=1
 hdmi_mode=1
 config_hdmi_boost=4
+```
 
-# turn of screen blanking, make sure kbd is installed
+To turn off screen blanking, make sure **kbd** is installed.
+
+```
 aptitude install kbd
-# and edit the following config to set BLANK_TIME=0
+```
+
+Edit the following config to set BLANK_TIME=0
+
+```
 nano /etc/kbd/config
+```
 
-#then need to reboot again for the above to take effect
+Reboot for the above to take effect.
+
+```
 reboot
+```
 
-#so we need a build environment as olsrd2 will be have to be built from source
+Now we need a build environment for **olsrd2** to be built from source.
+
+```
 sudo aptitude install git gcc build-essential cmake
+```
 
-#however that cmake is too old for olsrd2 so need to also build a newer one
+Since this version of **cmake** is too old for **olsrd2**, we will need to build a newer one.
+
+```
 git clone git://cmake.org/cmake.git
 cd cmake
 cmake .
 make
 make install
 reboot
-#need a reboot
+```
 
 
-#more dependencies needed to build olsrd2
+More dependencies needed to build **olsrd2**.
+
+```
 aptitude install pkg-config libnl-genl-3-dev
-#we are still in /root so grab the olsrd2 and build it
+```
+
+We are still in **/root** so grab the **olsrd2** and build it.
+
+```
 git clone git://olsr.org/oonf.git
 cd oonf/build
-#need to ignore warning as there may be some
+```
+
+Ignore any warnings as there may be some.
+
+```
 cmake -D OONF_NO_WERROR=true ..
 make
 make install
+```
 
-#make sure we have wlan drivers
+Make sure we have WLAN drivers.
+
+```
 aptitude install wireless-tools firmware-ralink
+```
 
-#add the following setup to /etc/network/interface
+Add the following setup to **/etc/network/interface**.
+
+```
 auto wlan1
 iface wlan1 inet static
   wireless-essid monster-mesh
@@ -64,11 +113,19 @@ iface wlan1 inet static
   wireless-channel 1
   address 192.168.0.0
   netmask 255.255.0.0
-#then push it up
+```
+
+Now push it up.
+
+```
 ifup wlan1
+```
 
 
-#this will hopefully start the mesh
+This will hopefully start the mesh!
+
+```
 olsrd2_static --set log.debug=auto_ll4 --set global.plugin=auto_ll4 wlan1
+```
 
 
