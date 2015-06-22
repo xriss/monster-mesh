@@ -19,7 +19,7 @@ raspi-config
 reboot
 ```
 
-Install **Byobu**.
+Install **Byobu**, a preferred window manager (*optional*).
 
 ```
 apt-get install aptitude sudo nano byobu
