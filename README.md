@@ -47,7 +47,7 @@ To turn off screen blanking, make sure **kbd** is installed.
 aptitude install kbd
 ```
 
-Edit the following config to set BLANK_TIME=0
+Edit the following config to set **BLANK_TIME=0**
 
 ```
 nano /etc/kbd/config
