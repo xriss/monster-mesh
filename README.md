@@ -11,7 +11,7 @@ Login ```root```
 Password ```raspberry```
 
 
-Install and run **raspi-config** to resize the partition and then reboot.
+Install and run **raspi-config** to **Expand Filesystem** and then reboot.
 
 ```
 apt-get install raspi-config
