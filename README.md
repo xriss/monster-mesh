@@ -53,6 +53,18 @@ Edit the following config to set **BLANK_TIME=0**
 nano /etc/kbd/config
 ```
 
+By default the login screen clears the boot logs which can make it harder to find the IP so lets turn this off
+
+```
+nano /etc/inittab 
+```
+
+and change the line that control the tty1 login to add a --noclear option so it looks like this
+
+```
+1:2345:respawn:/sbin/getty --noclear 38400 tty1
+```
+
 Reboot for the above to take effect.
 
 ```
