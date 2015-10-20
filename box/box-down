@@ -1,0 +1,11 @@
+cd `dirname $0`
+
+echo " killing all qemu-system-arm a bit excessive yes, but it actually works... "
+
+./ssh shutdown 0
+
+sleep 5
+
+killall qemu-system-arm
+
+
