@@ -1,0 +1,6 @@
+
+#ignore the big bin files in box
+box/*.img
+box/kernel-qemu
+
+
