@@ -1,11 +1,11 @@
 cd `dirname $0`
 
-echo " killing all qemu-system-arm a bit excessive yes, but it actually works... "
+echo " box is shutting down "
+#echo " killing all qemu-system-arm a bit excessive yes, but it actually works... "
 
-./ssh shutdown 0
+./ssh reboot
 
-sleep 5
-
-killall qemu-system-arm
+#sleep 10
+#killall qemu-system-arm
 
 
