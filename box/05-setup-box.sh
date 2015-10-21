@@ -9,8 +9,8 @@ echo " apply final resize of partition "
 ./ssh " resize2fs /dev/sda2 "
 
 echo " updating apt info and sites "
-#./ssh " apt-get -y update "
-#./ssh " apt-get -y upgrade "
+./ssh " apt-get -y update "
+./ssh " apt-get -y upgrade "
 
 echo " installing lots of packages we will need later "
 ./ssh " apt-get -y install aptitude sudo nano byobu git gcc build-essential cmake pkg-config libnl-genl-3-dev wireless-tools firmware-ralink kbd "
