@@ -21,18 +21,17 @@ echo " remove some things that we really do want to get in our way "
 echo " replace log system "
 ./ssh " apt-get -y install busybox-syslogd; dpkg --purge rsyslog "
 
-echo " disable swap and filesystem check on boot (ignore clock skew hang) "
-./ssh " cat >/boot/cmdline.txt " <<EOF
-
-fastboot noswap
-
-EOF
 
 echo " mount ro on boot "
 ./ssh " cat >/etc/fstab " <<EOF
 
 /dev/mmcblk0p1 /boot vfat defaults,ro         0 2
 /dev/mmcblk0p2 /     ext4 defaults,noatime,ro 0 1
+
+#under qemu the above fails but the following replaces it
+
+/dev/sda1 /boot vfat defaults,ro         0 2
+/dev/sda2 /     ext4 defaults,noatime,ro 0 1
 
 EOF
 
