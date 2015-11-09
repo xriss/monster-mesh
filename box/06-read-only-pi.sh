@@ -67,3 +67,7 @@ EOF
 
 echo " delete dirs full of tmp files and relink them into /tmp (ram) then reboot "
 ./ssh " sudo rm -rf /var/lib/dhcp/ && sudo ln -s /tmp /var/lib/dhcp ; sudo rm -rf /var/run /var/spool /var/lock && sudo ln -s /tmp /var/run && sudo ln -s /tmp /var/spool && sudo ln -s /tmp /var/lock ; sudo reboot "
+
+echo " shutting down VM as we need to reboot, run box-up again to get it back"
+./ssh " reboot "
+
