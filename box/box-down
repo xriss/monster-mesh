@@ -1,11 +1,35 @@
 cd `dirname $0`
 
 echo " box is shutting down "
-#echo " killing all qemu-system-arm a bit excessive yes, but it actually works... "
 
-./ssh reboot
+./ssh " sudo reboot "
 
-#sleep 10
-#killall qemu-system-arm
+echo " waiting and then killing all qemu-system-arm because nuke the site from orbit is the only way to be sure "
+sleep 10
+killall qemu-system-arm
+
+
+./box-mount
+
+sudo tee root/etc/fstab >/dev/null <<EOF
+
+proc            /proc           proc    defaults          0       0
+/dev/mmcblk0p1  /boot           vfat    defaults          0       2
+/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
+
+#/dev/sda2  /               ext4    defaults,noatime  0       1
+
+EOF
+
+
+sudo tee root/etc/ld.so.preload >/dev/null <<EOF
+
+/usr/lib/arm-linux-gnueabihf/libarmmem.so
+
+EOF
+
+
+./box-umount
+
 
 

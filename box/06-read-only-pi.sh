@@ -12,50 +12,58 @@ cd `dirname $0`
 echo " setting the pi sd card to boot in read only mode "
 
 
-
 echo " remove some things that we really do want to get in our way "
-./ssh " apt-get -y remove --purge triggerhappy logrotate dbus dphys-swapfile "
-./ssh " apt-get -y autoremove --purge "
+./ssh " sudo apt-get -y remove --purge triggerhappy logrotate dbus dphys-swapfile "
+./ssh " sudo apt-get -y autoremove --purge "
 
 
 echo " replace log system "
-./ssh " apt-get -y install busybox-syslogd; dpkg --purge rsyslog "
+./ssh " sudo apt-get -y install busybox-syslogd; dpkg --purge rsyslog "
 
-
-echo " mount ro on boot "
-./ssh " cat >/etc/fstab " <<EOF
-
-/dev/mmcblk0p1 /boot vfat defaults,ro         0 2
-/dev/mmcblk0p2 /     ext4 defaults,noatime,ro 0 1
-
-#under qemu the above fails but the following replaces it
-
-/dev/sda1 /boot vfat defaults,ro         0 2
-/dev/sda2 /     ext4 defaults,noatime,ro 0 1
-
-EOF
 
 echo " save time every hour "
-./ssh " cat >/etc/cron.hourly/fake-hwclock " <<EOF
+./ssh " sudo cat >/etc/cron.hourly/fake-hwclock " <<EOF
 #!/bin/sh
 #
 # Simple cron script - save the current clock periodically in case of
 # a power failure or other crash
  
 if (command -v fake-hwclock >/dev/null 2>&1) ; then
-  mount -o remount,rw /
-  fake-hwclock save
-  mount -o remount,ro /
+
+#check if root is rw already before re mounting it
+fs_mode=$(mount | sed -n -e "s/^\/dev\/root on \/ .*(\(r[w|o]\).*/\1/p")
+
+	if [ "$fs_mode" = "ro" ] ; then
+
+		mount -o remount,rw /
+		fake-hwclock save
+		mount -o remount,ro /
+
+	else
+
+		fake-hwclock save
+
+	fi
+
 fi
 EOF
 
-echo " add ro and rw commands to remount file system"
-./ssh " cat >>/etc/bash.bashrc " <<EOF
+echo " add ro and rw commands to remount file system and boot into ro mode"
+./ssh " sudo cat >>/etc/bash.bashrc " <<EOF
 
 alias ro='mount -o remount,ro / ; fs_mode=$(mount | sed -n -e "s/^\/dev\/root on \/ .*(\(r[w|o]\).*/\1/p")'
 alias rw='mount -o remount,rw / ; fs_mode=$(mount | sed -n -e "s/^\/dev\/root on \/ .*(\(r[w|o]\).*/\1/p")'
 
 EOF
 
+./ssh " sudo cat >/etc/rc.local " <<EOF
+
+echo "Switching root to ReadOnly mode"
+alias ro='mount -o remount,ro /
+
+exit 0
+
+EOF
+
 echo " delete dirs full of tmp files and relink them into /tmp (ram) then reboot "
-./ssh " rm -rf /var/lib/dhcp/ && ln -s /tmp /var/lib/dhcp ; rm -rf /var/run /var/spool /var/lock && ln -s /tmp /var/run && ln -s /tmp /var/spool && ln -s /tmp /var/lock ; reboot "
+./ssh " sudo rm -rf /var/lib/dhcp/ && sudo ln -s /tmp /var/lib/dhcp ; sudo rm -rf /var/run /var/spool /var/lock && sudo ln -s /tmp /var/run && sudo ln -s /tmp /var/spool && sudo ln -s /tmp /var/lock ; sudo reboot "

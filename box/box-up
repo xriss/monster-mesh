@@ -3,4 +3,26 @@ cd `dirname $0`
 echo " running monster-mesh.img using qemu "
 echo " you can no longer use this shell "
 
+./box-mount
+
+sudo tee root/etc/fstab >/dev/null <<EOF
+
+proc            /proc           proc    defaults          0       0
+#/dev/mmcblk0p1  /boot           vfat    defaults          0       2
+#/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
+
+/dev/sda2  /               ext4    defaults,noatime  0       1
+
+EOF
+
+
+sudo tee root/etc/ld.so.preload >/dev/null <<EOF
+
+#/usr/lib/arm-linux-gnueabihf/libarmmem.so
+
+EOF
+
+
+./box-umount
+
 qemu-system-arm -kernel kernel-qemu -cpu arm1176 -m 256 -M versatilepb -no-reboot -append "root=/dev/sda2 panic=1 console=ttyAMA0  console=ttyS0" -hda monster-mesh.img -redir tcp:5522::22 -nographic

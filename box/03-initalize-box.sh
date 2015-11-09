@@ -5,33 +5,32 @@ THISDIR=`dirname $0`
 echo " creating monster-mesh.img "
 
 
-echo " copying minibian "
-cp 2015-02-18-wheezy-minibian.img monster-mesh.img
+echo " copying raspbian "
+#cp 2015-09-24-raspbian-jessie.img monster-mesh.img
 
-echo " resizing to 2gig "
-qemu-img resize monster-mesh.img 2G
+./box-mount
 
-echo " checking partition information "
+echo " setup boot config to lowres HDMI so we can plug into any monitor and see something "
+sudo cat >./boot/config.txt <<EOF
 
-# Get the starting offset of the root partition (not sure about trailing s)
-PART_START=$(parted monster-mesh.img -ms unit s print | grep "^2" | cut -f 2 -d: | cut -f 1 -ds)
+gpu_mem=32
 
-#check we have a partition size
-[ "$PART_START" ] && echo " PART_START=$PART_START " || exit 20
+hdmi_force_hotplug=1
+hdmi_drive=2
+hdmi_group=1
+hdmi_mode=1
+config_hdmi_boost=4
 
-PART_START_BYTE=$(echo "$PART_START * 512" | bc)
-echo " PART_START_BYTE=$PART_START_BYTE "
-
-echo " resizing using fdisk "
-fdisk monster-mesh.img <<EOF
-p
-d
-2
-n
-p
-2
-$PART_START
-
-p
-w
 EOF
+#cat ./boot/config.txt
+
+
+echo " disable swap and filesystem check on boot (ignore clock skew hang) "
+sudo cat >./boot/cmdline.txt <<EOF
+
+dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty1 elevator=deadline root=/dev/mmcblk0p2 rootfstype=ext4 rootwait fastboot noswap
+
+EOF
+#cat ./boot/cmdline.txt
+
+./box-umount
