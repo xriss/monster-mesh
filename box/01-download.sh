@@ -2,15 +2,23 @@ cd `dirname $0`
 
 
 
-if [ -f 2015-09-24-raspbian-jessie.img ] ; then
+#if [ -f 2015-09-24-raspbian-jessie.img ] ; then
+#	echo " 2015-09-24-raspbian-jessie.img exists so skipping download and unpack"
+#else
+#	wget https://downloads.raspberrypi.org/raspbian/images/raspbian-2015-09-28/2015-09-24-raspbian-jessie.zip
+#	unzip 2015-09-24-raspbian-jessie.zip
+#	rm 2015-09-24-raspbian-jessie.zip
+#fi
 
-	echo " 2015-09-24-raspbian-jessie.img exists so skipping download and unpack"
+
+if [ -f diet-raspbian-2.0.0.img ] ; then
+
+	echo " diet-raspbian-2.0.0.img exists so skipping download and unpack"
 
 else
 
-	wget https://downloads.raspberrypi.org/raspbian/images/raspbian-2015-09-28/2015-09-24-raspbian-jessie.zip
-	unzip 2015-09-24-raspbian-jessie.zip
-	rm 2015-09-24-raspbian-jessie.zip
+	wget http://files.midwesternmac.com/rpi/diet-raspbian-2.0.0.img.gz
+	gunzip diet-raspbian-2.0.0.img.gz
 
 fi
 
