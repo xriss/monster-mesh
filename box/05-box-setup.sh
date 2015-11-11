@@ -13,7 +13,7 @@ echo " updating apt info and sites "
 ./ssh " sudo apt-get -y upgrade "
 
 echo " installing lots of packages we will need later "
-./ssh " sudo apt-get -y install aptitude sudo nano byobu git gcc build-essential cmake pkg-config libnl-genl-3-dev wireless-tools firmware-ralink kbd raspi-config lynx curl traceroute dbus consolekit input-utils"
+./ssh " sudo apt-get -y install aptitude sudo nano byobu git gcc build-essential cmake pkg-config libnl-genl-3-dev wireless-tools firmware-ralink kbd raspi-config lynx curl traceroute dbus consolekit input-utils wavemon"
 
 echo " setting up KBD to disable screen blank "
 ./ssh " sudo sed -i -e 's/getty 38400 tty1/getty --noclear 38400 tty1/g' /etc/inittab "
