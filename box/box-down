@@ -11,22 +11,10 @@ killall qemu-system-arm
 
 ./box-mount
 
-sudo tee root/etc/fstab >/dev/null <<EOF
+echo " restoring fstab and ld.so.preload for card"
 
-proc            /proc           proc    defaults          0       0
-/dev/mmcblk0p1  /boot           vfat    defaults          0       2
-/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
-
-#/dev/sda2  /               ext4    defaults,noatime  0       1
-
-EOF
-
-
-sudo tee root/etc/ld.so.preload >/dev/null <<EOF
-
-/usr/lib/arm-linux-gnueabihf/libarmmem.so
-
-EOF
+sudo cp root/etc/fstab.card         root/etc/fstab
+sudo cp root/etc/ld.so.preload.card root/etc/ld.so.preload
 
 
 ./box-umount

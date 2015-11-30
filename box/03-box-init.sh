@@ -53,4 +53,52 @@ config_hdmi_boost=4
 EOF
 #cat ./boot/config.txt
 
+
+#use these for card booting
+sudo tee root/etc/fstab.card >/dev/null <<EOF
+
+proc            /proc           proc    defaults          0       0
+/dev/mmcblk0p1  /boot           vfat    defaults,noatime  0       2
+/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
+
+tmpfs            /tmp           tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/lib/dhcp  tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/run       tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/spool     tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/lock      tmpfs   defaults,noatime,nosuid,size=64m    0 0
+
+#/dev/sda2  /               ext4    defaults,noatime  0       1
+
+EOF
+sudo tee root/etc/ld.so.preload.card >/dev/null <<EOF
+
+/usr/lib/arm-linux-gnueabihf/libarmmem.so
+
+EOF
+
+
+#use these for qemu booting
+sudo tee root/etc/fstab.qemu >/dev/null <<EOF
+
+proc             /proc           proc    defaults          0       0
+#/dev/mmcblk0p1  /boot           vfat    defaults,noatime  0       2
+#/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
+
+tmpfs            /tmp           tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/lib/dhcp  tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/run       tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/spool     tmpfs   defaults,noatime,nosuid,size=64m    0 0
+tmpfs            /var/lock      tmpfs   defaults,noatime,nosuid,size=64m    0 0
+
+/dev/sda2  /               ext4    defaults,noatime  0       1
+
+EOF
+sudo tee root/etc/ld.so.preload.qemu >/dev/null <<EOF
+
+#/usr/lib/arm-linux-gnueabihf/libarmmem.so
+
+EOF
+
+
+
 ./box-umount

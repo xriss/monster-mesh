@@ -1,4 +1,5 @@
 
+ifconfig wlan0 down
 /etc/init.d/network-manager stop
 ifconfig wlan0 up
 
