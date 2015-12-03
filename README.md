@@ -1,6 +1,6 @@
-How to Monster Mesh *(out of date 03/12/2015 , needs updating)*
+How to Monster Mesh
 ===================
-
+*(out of date as of 03/12/2015, will be updated rsn)*
 
 Install and start **MINIBIAN**, a minimal Raspbian-based Linux image for Raspberry Pi.
 
