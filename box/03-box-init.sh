@@ -5,9 +5,8 @@ THISDIR=`dirname $0`
 echo " creating monster-mesh.img "
 
 
-echo " copying diet raspbian "
-#cp 2015-09-24-raspbian-jessie.img monster-mesh.img
-cp diet-raspbian-2.0.0.img monster-mesh.img
+echo " copying raspbian "
+cp raspbian.img monster-mesh.img
 
 
 
