@@ -1,35 +1,25 @@
 cd `dirname $0`
 
+#update these to get a newer version
+RASPBIAN_FILE=2015-11-21-raspbian-jessie-lite
+RASPBIAN_URL=https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2015-11-24/$RASPBIAN_FILE.zip
 
 
-#if [ -f 2015-09-24-raspbian-jessie.img ] ; then
-#	echo " 2015-09-24-raspbian-jessie.img exists so skipping download and unpack"
-#else
-#	wget https://downloads.raspberrypi.org/raspbian/images/raspbian-2015-09-28/2015-09-24-raspbian-jessie.zip
-#	unzip 2015-09-24-raspbian-jessie.zip
-#	rm 2015-09-24-raspbian-jessie.zip
-#fi
+if [ -f raspbian.img ] ; then
 
-
-if [ -f diet-raspbian-2.0.0.img ] ; then
-
-	echo " diet-raspbian-2.0.0.img exists so skipping download and unpack"
+	echo " raspbian.img exists so skipping download and unpack "
 
 else
 
-	wget http://files.midwesternmac.com/rpi/diet-raspbian-2.0.0.img.gz
-	gunzip diet-raspbian-2.0.0.img.gz
+	wget -O $RASPBIAN_FILE.zip $RASPBIAN_URL
+	unzip -o $RASPBIAN_FILE.zip
+	rm $RASPBIAN_FILE.zip
+	mv $RASPBIAN_FILE.img raspbian.img
 
 fi
 
 
-#if [ -f 2015-02-18-wheezy-minibian.img ] ; then
-#	echo " 2015-02-18-wheezy-minibian.img exists so skipping download and unpack"
-#else
-#	wget -O minibian.img.tar.gz http://sourceforge.net/projects/minibian/files/2015-02-18-wheezy-minibian.tar.gz/download
-#	tar xvfz minibian.img.tar.gz
-#	rm minibian.img.tar.gz
-#fi
+
 
 if [ -f kernel-qemu ] ; then
 

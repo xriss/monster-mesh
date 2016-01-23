@@ -13,7 +13,7 @@ echo " updating apt info and sites"
 ./ssh " sudo apt-get -y upgrade "
 
 echo " getting latest firmware"
-echo " if we are broken this may fix stuff, but if we are fixed this may break stuff "
+echo " if we are currently broken this may fix stuff, but if we are currently fixed this may break stuff "
 echo " so this is either a good idea, or a bad idea, comment it out if it was a bad idea "
 ./ssh " sudo rpi-update "
 
