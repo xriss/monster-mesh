@@ -36,7 +36,7 @@ EOF
 
 ./box-mount
 
-echo " setup boot config to lowres HDMI so we can plug into any monitor and see something "
+echo " setup boot config to 720p with no overscan and a 32meg gfx card"
 sudo tee boot/config.txt >/dev/null <<EOF
 
 gpu_mem=32
@@ -46,10 +46,19 @@ hdmi_drive=2
 hdmi_group=1
 config_hdmi_boost=4
 
-#uncomment below to force 640x480
-#hdmi_mode=1
+#set 720p with no overscan
+hdmi_mode=4
+disable_overscan=1
 
 EOF
+
+echo " disable console blank and raspi logo "
+sudo tee boot/cmdline.txt >/dev/null <<EOF
+
+dwc_otg.lpm_enable=0 console=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait logo.nologo consoleblank=0
+
+EOF
+
 
 #this is needed to allow qemu to boot
 sudo tee root/etc/ld.so.preload.qemu >/dev/null <<EOF
