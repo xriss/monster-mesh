@@ -1,0 +1,44 @@
+
+echo getting link local address for mac
+
+read MAC </sys/class/net/wlan0/address
+IFS=':'; set $MAC; unset IFS
+IPV6="fe80::$(printf %02x $((0x$1 ^ 2)))$2:${3}ff:fe$4:$5$6"
+
+echo a wlan0 mac of $MAC converts to $IPV6/64
+
+
+sudo ifconfig wlan0 down
+
+sleep 1
+
+sudo ifconfig wlan0 inet6
+sudo ifconfig wlan0 add $IPV6/64
+sudo iwconfig wlan0 mode ad-hoc
+sudo iwconfig wlan0 essid monster-mesh
+sudo iwconfig wlan0 key 0000000000
+sudo iwconfig wlan0 channel 1
+
+sleep 1
+
+sudo ifconfig wlan0 up
+
+sleep 1
+
+sudo ifconfig wlan0 inet6
+sudo ifconfig wlan0 add $IPV6/64
+sudo iwconfig wlan0 mode ad-hoc
+sudo iwconfig wlan0 essid monster-mesh
+sudo iwconfig wlan0 key 0000000000
+sudo iwconfig wlan0 channel 1
+
+sleep 1
+
+ifconfig wlan0
+iwconfig wlan0
+
+sleep 10
+
+#ping all devices and see who is there
+sudo ping6 -c16 ff02::1%wlan0
+

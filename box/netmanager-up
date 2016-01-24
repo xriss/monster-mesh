@@ -1,0 +1,3 @@
+
+sudo /etc/init.d/network-manager start
+
