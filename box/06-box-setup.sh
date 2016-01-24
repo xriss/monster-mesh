@@ -3,7 +3,11 @@ cd `dirname $0`
 echo " building monster-mesh.img from default raspbian img "
 
 ssh-keygen -f "$HOME/.ssh/known_hosts" -R [localhost]:5522
-cat ~/.ssh/id_rsa.pub | sshpass -p raspberry ssh -oStrictHostKeyChecking=no -p 5522 pi@localhost " mkdir -p .ssh ; cat >> .ssh/authorized_keys "
+while ! cat ~/.ssh/id_rsa.pub | sshpass -p raspberry ssh -oStrictHostKeyChecking=no -p 5522 pi@localhost " mkdir -p .ssh ; cat >> .ssh/authorized_keys "
+do
+	sleep 1
+    echo "Trying ssh login again..."
+done
 
 echo " apply final resize of partition "
 ./ssh " sudo resize2fs /dev/sda2 "
