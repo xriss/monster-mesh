@@ -11,7 +11,7 @@ echo " softboiling monster-mesh.img "
 #fstab mounts that use the ramdisk for often written files, that are save to delete on power off
 
 
-# turns out on recent versions (systemd?) that /run is not safe to move to ram.
+# turns out on recent versions (systemd?) that /var/run is not safe to move to ram anymore.
 #tmpfs            /var/run       tmpfs   defaults,noatime,nosuid,size=64m    0 0
 
 
