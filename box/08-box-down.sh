@@ -1,2 +1,2 @@
 cd `dirname $0`
-./box-up &
+./box-down
