@@ -11,7 +11,7 @@ cp raspbian.img monster-mesh.img
 
 
 echo " resizing to 3gig "
-qemu-img resize monster-mesh.img 3G
+qemu-img resize -f raw monster-mesh.img 3G
 
 echo " checking partition information "
 
@@ -50,28 +50,27 @@ config_hdmi_boost=4
 #hdmi_mode=1
 
 EOF
-#cat ./boot/config.txt
 
+#this is needed to allow qemu to boot
+sudo tee root/etc/ld.so.preload.qemu >/dev/null <<EOF
 
-#use these for card booting
+#/usr/lib/arm-linux-gnueabihf/libarmmem.so
+
+EOF
+sudo tee root/etc/ld.so.preload.card >/dev/null <<EOF
+
+/usr/lib/arm-linux-gnueabihf/libarmmem.so
+
+EOF
+
+#copy fstab to qemu and card versions
 sudo tee root/etc/fstab.card >/dev/null <<EOF
 
 proc            /proc           proc    defaults          0       0
 /dev/mmcblk0p1  /boot           vfat    defaults,noatime  0       2
 /dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
 
-tmpfs            /tmp           tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/lib/dhcp  tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/run       tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/spool     tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/lock      tmpfs   defaults,noatime,nosuid,size=64m    0 0
-
 #/dev/sda2  /               ext4    defaults,noatime  0       1
-
-EOF
-sudo tee root/etc/ld.so.preload.card >/dev/null <<EOF
-
-/usr/lib/arm-linux-gnueabihf/libarmmem.so
 
 EOF
 
@@ -83,21 +82,8 @@ proc             /proc           proc    defaults          0       0
 #/dev/mmcblk0p1  /boot           vfat    defaults,noatime  0       2
 #/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
 
-tmpfs            /tmp           tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/lib/dhcp  tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/run       tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/spool     tmpfs   defaults,noatime,nosuid,size=64m    0 0
-tmpfs            /var/lock      tmpfs   defaults,noatime,nosuid,size=64m    0 0
-
 /dev/sda2  /               ext4    defaults,noatime  0       1
 
 EOF
-sudo tee root/etc/ld.so.preload.qemu >/dev/null <<EOF
-
-#/usr/lib/arm-linux-gnueabihf/libarmmem.so
-
-EOF
-
-
 
 ./box-umount
