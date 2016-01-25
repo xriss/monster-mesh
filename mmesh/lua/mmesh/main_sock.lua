@@ -20,8 +20,8 @@ M.bake=function(main,sock)
 	sock.modname=M.modname
 
 -- configurable defaults
-sock.host="*"
-sock.broad="255.255.255.255"
+sock.host="::"
+sock.broad="ff02::1%wlan0"
 sock.port=17071
 
 
@@ -29,10 +29,11 @@ sock.setup=function()
 
 	sock.udp=assert(socket.udp())
 	
-	assert( sock.udp:setoption('broadcast', true) )
+--	assert( sock.udp:setoption('dontroute', true) )
+--	assert( sock.udp:setoption('broadcast', true) )
 	assert( sock.udp:settimeout(0) )
 	assert( sock.udp:setsockname(sock.host, sock.port) )
-	assert( sock.udp:setpeername(sock.host, sock.port) )
+--	assert( sock.udp:setpeername(sock.host, sock.port) )
 
 end
 
@@ -46,6 +47,8 @@ end
 sock.count=0
 sock.update=function()
 
+--print(sock.count)
+
 	sock.count=sock.count+1
 
 	local m={}
@@ -54,7 +57,9 @@ sock.update=function()
 	m.time=os.time()
 	
 	
-	assert( sock.udp:sendto( cmsgpack.pack(m) , sock.broad , sock.port ) )
+--	assert(
+	 sock.udp:sendto( cmsgpack.pack(m) , sock.broad , sock.port )
+--	 )
 
 	local data, ip, port
 	
@@ -63,7 +68,7 @@ sock.update=function()
 		data, ip, port = sock.udp:receivefrom()
 		if data then
 			local m=cmsgpack.unpack(data)
---			print( m.count, ip, port )
+			print( m.count, ip, port , m.cmd , m.time )
 		end
 		
 	until not data

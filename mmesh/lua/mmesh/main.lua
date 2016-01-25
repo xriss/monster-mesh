@@ -27,27 +27,27 @@ main.setup=function()
 		print(i,v)
 	end
 	
---	main.sock.setup()
-	main.sound.setup()
-	main.gpios.setup()
+	main.sock.setup()
+--	main.sound.setup()
+--	main.gpios.setup()
 	
 end
 
 
 main.clean=function()
 
---	main.sock.clean()
-	main.sound.clean()
-	main.gpios.clean()
+	main.sock.clean()
+--	main.sound.clean()
+--	main.gpios.clean()
 
 end
 
 
 main.update=function()
 
---	main.sock.update()
-	main.sound.update()
-	main.gpios.update()
+	main.sock.update()
+--	main.sound.update()
+--	main.gpios.update()
 
 end
 
