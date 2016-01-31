@@ -41,8 +41,9 @@ M.bake=function(opts,main)
 --os.exit()
 
 -- configurable defaults
+	opts.device  =opts.device             or "wlan0"
 	opts.host    =opts.host               or "::"
-	opts.addr    =opts.addr               or "ff02::1" -- "ff02::1%wlan0"
+	opts.addr    =opts.addr               or "ff02::1"
 	opts.inport  =tonumber(opts.inport)   or 17071
 	opts.outport =tonumber(opts.outport)  or 17071
 	opts.range   =tonumber(opts.range)    or 1
@@ -58,6 +59,7 @@ M.bake=function(opts,main)
 	end
 	print("")
 
+	main.history=require("mmesh.main_history").bake(main)
 	main.sound=require("mmesh.main_sound").bake(main)
 	main.sock=require("mmesh.main_sock").bake(main)
 	main.gpios=require("mmesh.main_gpios").bake(main)
@@ -66,6 +68,7 @@ M.bake=function(opts,main)
 main.setup=function()
 
 	
+	main.history.setup()
 	main.sock.setup()
 	main.sound.setup()
 	main.gpios.setup()
@@ -75,6 +78,7 @@ end
 
 main.clean=function()
 
+	main.history.clean()
 	main.sock.clean()
 	main.sound.clean()
 	main.gpios.clean()

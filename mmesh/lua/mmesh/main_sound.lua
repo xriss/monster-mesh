@@ -171,6 +171,8 @@ if sound.dev then
 		
 --print("sound in",sound.encode_siz,sound.decode_siz,sound.decode_dat)
 
+--[[
+
 local pit={}
 pit.cmd="test"
 pit.data=wpack.tostring(sound.encode_dat,sound.encode_siz)
@@ -183,6 +185,8 @@ local pz2=zlib.deflate()(pd2,"finish")
 print((sound.encode_siz),#pd1.." > "..#pz1,#pd2.." > "..#pz2)
 
 --print(wstr.serialize( cmsgpack.unpack(pd2) ,{compact=true} ))
+
+]]
 
 	end
 end

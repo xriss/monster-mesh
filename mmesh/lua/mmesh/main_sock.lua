@@ -38,6 +38,15 @@ sock.setup=function()
 	sock.out_udp=assert(socket.udp())
 	assert( sock.out_udp:settimeout(0) )
 	assert( sock.out_udp:setsockname(opts.host,0) )
+	
+-- find out our ip
+	local t=socket.udp()
+	assert( t:settimeout(0) )
+	assert( t:setsockname(opts.host,0) )
+	assert( t:setpeername("fe80::1%"..opts.device,opts.outport) ) -- we want the link local address
+	socket.hostname=t:getsockname()
+	
+--	print( socket.hostname )
 
 end
 
@@ -67,7 +76,7 @@ sock.update=function()
 	if m.time>sock.time then
 		sock.time=m.time
 		local p=math.random(1,opts.range)-1 -- add this for a random broadcast range
-		assert(sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr , opts.outport+p ))
+		assert(sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr.."%"..opts.device , opts.outport+p ))
 	end
 
 	local data, ip, port
@@ -84,6 +93,10 @@ sock.update=function()
 		
 	until not data
 
+end
+
+sock.get_from=function()
+	return sock.in_udp
 end
 
 
