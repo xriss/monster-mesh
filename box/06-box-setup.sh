@@ -2,6 +2,7 @@ cd `dirname $0`
 
 echo " building monster-mesh.img from default raspbian img "
 
+echo " copying your id_rsa.pub to the pis authorised keys for auto login "
 ssh-keygen -f "$HOME/.ssh/known_hosts" -R [localhost]:5522
 while ! cat ~/.ssh/id_rsa.pub | sshpass -p raspberry ssh -oStrictHostKeyChecking=no -p 5522 pi@localhost " mkdir -p .ssh ; cat >> .ssh/authorized_keys "
 do

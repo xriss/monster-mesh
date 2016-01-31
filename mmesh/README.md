@@ -2,7 +2,7 @@ MMesh
 =====
 
 This is the lua based app that handles voice transmission, it requres a 
-prebuilt gamecake binary which provides C side binding hardware and 
+prebuilt gamecake binary which provides C side binding to hardware and 
 useful libraries.
 
 

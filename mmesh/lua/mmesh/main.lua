@@ -14,6 +14,23 @@ local M={ modname=(...) } ; package.loaded[M.modname]=M
 M.bake=function(opts,main)
 	main=main or {}
 	main.modname=M.modname
+	
+	local t={} -- process command line opts
+	for i,l in ipairs(opts) do
+		local k,v=string.match(l, "%-%-([^=]+)=([^=]+)")   -- check for --key=value
+		if not k then k=string.match(l, "%-%-([^=]+)") end -- check for just --key
+		if k then
+			t[k]=v or true
+		else
+			if not(l=="--" and i==1) then -- skip the first -- which is just telling the lua executable to ignore my args
+				t[#t+1]=l
+			end
+		end
+	end
+	main.opts=t -- remember these processed opts
+
+--print(wstr.dump(t))
+--os.exit()
 
 	main.sound=require("mmesh.main_sound").bake(main)
 	main.sock=require("mmesh.main_sock").bake(main)
