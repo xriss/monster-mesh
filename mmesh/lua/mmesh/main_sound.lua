@@ -21,6 +21,7 @@ local function dprint(a) print(wstr.dump(a)) end
 local M={ modname=(...) } ; package.loaded[M.modname]=M
 
 M.bake=function(main,sound)
+	local opts=main.opts
 	local sound=sound or {}
 	sound.modname=M.modname
 
@@ -31,50 +32,6 @@ sound.packet_ms=60
 sound.packet_size=sound.packet_ms*sound.samplerate/1000
 sound.echo_ms=sound.packet_ms*3
 sound.echo_size=sound.echo_ms*sound.samplerate/1000
-
-sound.note_names={ "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"}
-sound.note_freq={
-{ [4]=261.63 },
-{ [4]=277.18 },
-{ [4]=293.66 },
-{ [4]=311.13 },
-{ [4]=329.63 },
-{ [4]=349.23 },
-{ [4]=369.99 },
-{ [4]=392.00 },
-{ [4]=415.30 },
-{ [4]=440.00 },
-{ [4]=466.16 },
-{ [4]=493.88 },
-}
-for i,v in ipairs(sound.note_freq) do -- build other octaves
-	v[1]=v[4]/8	v[2]=v[4]/4	v[3]=v[4]/2	v[5]=v[4]*2	v[6]=v[4]*4	v[7]=v[4]*8	v[8]=v[4]*16
-end
-sound.note_freq_add={}
-for i=1,11 do
-	sound.note_freq_add[i]={}
-	for j=1,8 do
-		sound.note_freq_add[i][j]=sound.note_freq[i+1][j] - sound.note_freq[i][j]
-	end
-end
-sound.note_freq_add[12]={}
-for j=1,7 do
-	sound.note_freq_add[12][j]=sound.note_freq[1][j+1] - sound.note_freq[12][j]
-end
-sound.note_freq_add[12][8]=0
-
-sound.freq2note=function(freq)
-	for i=1,8 do
-		if freq<=sound.note_freq[12][i] + (sound.note_freq_add[12][i]/2) then
-			for j=12,2,-1 do
-				if freq>sound.note_freq[j-1][i] + (sound.note_freq_add[j-1][i]/2) then
-					return sound.note_names[j]..i
-				end
-			end
-			return sound.note_names[1]..i
-		end
-	end
-end
 
 
 sound.setup=function()

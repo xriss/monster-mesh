@@ -47,6 +47,8 @@ M.bake=function(opts,main)
 	opts.outport =tonumber(opts.outport)  or 17071
 	opts.range   =tonumber(opts.range)    or 1
 
+	opts.fakesound=opts.fakesound or false
+
 	print("Setting up MMesh...")
 	print("")
 	if opts.verbose then
@@ -65,8 +67,8 @@ main.setup=function()
 
 	
 	main.sock.setup()
---	main.sound.setup()
---	main.gpios.setup()
+	main.sound.setup()
+	main.gpios.setup()
 	
 end
 
@@ -74,8 +76,8 @@ end
 main.clean=function()
 
 	main.sock.clean()
---	main.sound.clean()
---	main.gpios.clean()
+	main.sound.clean()
+	main.gpios.clean()
 
 end
 
@@ -83,8 +85,8 @@ end
 main.update=function()
 
 	main.sock.update()
---	main.sound.update()
---	main.gpios.update()
+	main.sound.update()
+	main.gpios.update()
 
 end
 

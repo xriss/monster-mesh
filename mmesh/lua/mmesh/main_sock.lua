@@ -13,9 +13,10 @@ local wpack=require("wetgenes.pack")
 local function dprint(a) print(wstr.dump(a)) end
 
 -- turn a timeout into a success
-local oktimeout=function(uhm,err)
---	if not uhm and err=="timeout" then return true,err end
-	return uhm,err
+local oktimeout=function(...)
+	local a={...}
+	if not a[1] and a[2]=="timeout" then return true,a[2] end
+	return ...
 end
 
 
@@ -23,8 +24,8 @@ end
 local M={ modname=(...) } ; package.loaded[M.modname]=M
 
 M.bake=function(main,sock)
-	local sock=sock or {}
 	local opts=main.opts
+	local sock=sock or {}
 	sock.modname=M.modname
 
 
@@ -43,7 +44,8 @@ end
 	
 sock.clean=function()
 
-	sock.udp:close()
+	sock.in_udp:close()
+	sock.out_udp:close()
 
 end
 
@@ -65,7 +67,7 @@ sock.update=function()
 	if m.time>sock.time then
 		sock.time=m.time
 		local p=math.random(1,opts.range)-1 -- add this for a random broadcast range
-		assert(oktimeout(sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr , opts.outport+p )))
+		assert(sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr , opts.outport+p ))
 	end
 
 	local data, ip, port
@@ -76,6 +78,8 @@ sock.update=function()
 		if data then
 			local m=cmsgpack.unpack(data)
 			print( m.count, ip, port.."->"..opts.inport , m.cmd , m.time )
+		else
+			if ip~="timeout" then assert(data,ip) end -- timeout is not an error, but anything else is
 		end
 		
 	until not data
