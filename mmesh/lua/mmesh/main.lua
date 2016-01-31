@@ -42,7 +42,7 @@ M.bake=function(opts,main)
 
 -- configurable defaults
 	opts.host    =opts.host               or "::"
-	opts.addr    =opts.addr               or "ff02::1%wlan0"
+	opts.addr    =opts.addr               or "ff02::1" -- "ff02::1%wlan0"
 	opts.inport  =tonumber(opts.inport)   or 17071
 	opts.outport =tonumber(opts.outport)  or 17071
 	opts.range   =tonumber(opts.range)    or 1

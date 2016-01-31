@@ -12,6 +12,13 @@ local wpack=require("wetgenes.pack")
 
 local function dprint(a) print(wstr.dump(a)) end
 
+-- turn a timeout into a success
+local oktimeout=function(uhm,err)
+--	if not uhm and err=="timeout" then return true,err end
+	return uhm,err
+end
+
+
 --module
 local M={ modname=(...) } ; package.loaded[M.modname]=M
 
@@ -27,12 +34,13 @@ sock.setup=function()
 	assert( sock.in_udp:settimeout(0) )
 	assert( sock.in_udp:setsockname(opts.host, opts.inport) )
 
-	if opts.out_port == opts.inport and opts.outrange==1 then -- send and receive on same port
-		sock.out_udp=sock.in_udp
-	else
+--	if opts.out_port == opts.inport and opts.outrange==1 then -- send and receive on same port
+--		sock.out_udp=sock.in_udp
+--	else
 		sock.out_udp=assert(socket.udp())
 		assert( sock.out_udp:settimeout(0) )
-	end
+		assert( sock.out_udp:setsockname(opts.host,0) )
+--	end
 
 end
 
@@ -60,9 +68,7 @@ sock.update=function()
 	if m.time>sock.time then
 		sock.time=m.time
 		local p=math.random(1,opts.range)-1 -- add this for a random broadcast range
---	assert(
-		sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr , opts.outport+p )
---	 )
+		assert(oktimeout(sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr , opts.outport+p )))
 	end
 
 	local data, ip, port
@@ -72,7 +78,7 @@ sock.update=function()
 		data, ip, port = sock.in_udp:receivefrom()
 		if data then
 			local m=cmsgpack.unpack(data)
-			print( m.count, ip, port , m.cmd , m.time )
+			print( m.count, ip, port.."->"..opts.inport , m.cmd , m.time )
 		end
 		
 	until not data
