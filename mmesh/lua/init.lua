@@ -6,7 +6,7 @@ require("apps").default_paths() -- default search paths so things can easily be 
 
 math.randomseed( os.time() ) -- try and randomise a little bit better
 
--- special bake and serv with out an oven (IE no window)
+-- special bake and serv without an oven (IE no window)
 
 local main=require("mmesh.main")
 return main.bake({...}):serv()

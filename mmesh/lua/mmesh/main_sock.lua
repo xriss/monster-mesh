@@ -17,22 +17,17 @@ local M={ modname=(...) } ; package.loaded[M.modname]=M
 
 M.bake=function(main,sock)
 	local sock=sock or {}
+	local opts=main.opts
 	sock.modname=M.modname
-
--- configurable defaults
-sock.host="::"
-sock.broad="ff02::1%wlan0"
-sock.in_port=17071
-sock.out_port=17071
 
 
 sock.setup=function()
 
 	sock.in_udp=assert(socket.udp())
 	assert( sock.in_udp:settimeout(0) )
-	assert( sock.in_udp:setsockname(sock.host, sock.in_port) )
+	assert( sock.in_udp:setsockname(opts.host, opts.inport) )
 
-	if sock.out_port == sock.in_port then -- send and receive on same port
+	if opts.out_port == opts.inport and opts.outrange==1 then -- send and receive on same port
 		sock.out_udp=sock.in_udp
 	else
 		sock.out_udp=assert(socket.udp())
@@ -49,6 +44,7 @@ sock.clean=function()
 end
 
 sock.count=0
+sock.time=0
 sock.update=function()
 
 --print(sock.count)
@@ -61,9 +57,13 @@ sock.update=function()
 	m.time=os.time()
 	
 	
+	if m.time>sock.time then
+		sock.time=m.time
+		local p=math.random(1,opts.range)-1 -- add this for a random broadcast range
 --	assert(
-	 sock.out_udp:sendto( cmsgpack.pack(m) , sock.broad , sock.out_port )
+		sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr , opts.outport+p )
 --	 )
+	end
 
 	local data, ip, port
 	
