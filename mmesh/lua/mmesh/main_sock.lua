@@ -34,13 +34,9 @@ sock.setup=function()
 	assert( sock.in_udp:settimeout(0) )
 	assert( sock.in_udp:setsockname(opts.host, opts.inport) )
 
---	if opts.out_port == opts.inport and opts.outrange==1 then -- send and receive on same port
---		sock.out_udp=sock.in_udp
---	else
-		sock.out_udp=assert(socket.udp())
-		assert( sock.out_udp:settimeout(0) )
-		assert( sock.out_udp:setsockname(opts.host,0) )
---	end
+	sock.out_udp=assert(socket.udp())
+	assert( sock.out_udp:settimeout(0) )
+	assert( sock.out_udp:setsockname(opts.host,0) )
 
 end
 
@@ -60,10 +56,11 @@ sock.update=function()
 	sock.count=sock.count+1
 
 	local m={}
-	m.count=sock.count
+--	m.count=sock.count
 	m.cmd="test"
 	m.time=os.time()
 	
+	math.random()
 	
 	if m.time>sock.time then
 		sock.time=m.time
