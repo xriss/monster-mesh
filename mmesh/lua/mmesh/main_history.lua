@@ -12,8 +12,9 @@ local M={ modname=(...) } ; package.loaded[M.modname]=M
 
 M.bake=function(main,history)
 	local opts=main.opts
-	local history=history or {}
 	history.modname=M.modname
+
+	local msg     = main.rebake("mmesh.main_msg")
 
 	history.table={}
 
@@ -84,6 +85,7 @@ history.add_new=function(it)
 		local tab=history.table[ it.from ] or {}
 		history.table[ it.from ]=tab
 		
+		it._t=os.time() -- remember our time stamp, we strip out all _ prefixed data before passing the msg on
 		table.insert(tab,it)
 		table.sort(tab,function(a,b) return a<b end) -- keep table sorted
 		

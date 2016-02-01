@@ -28,6 +28,8 @@ M.bake=function(main,sock)
 	local sock=sock or {}
 	sock.modname=M.modname
 
+	local msg     = main.rebake("mmesh.main_msg")
+
 
 sock.setup=function()
 
@@ -58,35 +60,22 @@ sock.clean=function()
 
 end
 
-sock.count=0
 sock.time=0
 sock.update=function()
 
---print(sock.count)
+	math.random() -- try and keep random random
 
-	sock.count=sock.count+1
-
-	local m={}
---	m.count=sock.count
-	m.cmd="test"
-	m.time=os.time()
-	
-	math.random()
-	
-	if m.time>sock.time then
-		sock.time=m.time
-		local p=math.random(1,opts.range)-1 -- add this for a random broadcast range
-		assert(sock.out_udp:sendto( cmsgpack.pack(m) , opts.addr.."%"..opts.device , opts.outport+p ))
-	end
-
-	local data, ip, port
-	
 	repeat -- grab all incoming data packets and setup client/play buffers ( we also broadcast to ourselves )
 	
-		data, ip, port = sock.in_udp:receivefrom()
+		local data, ip, port = sock.in_udp:receivefrom()
 		if data then
 			local m=cmsgpack.unpack(data)
-			print( m.count, ip, port.."->"..opts.inport , m.cmd , m.time )
+			if type(m) == "table" then -- remember sock meta data in msg
+				m._data=data
+				m._ip=ip
+				m._port=port
+				msg.got(m)
+			end
 		else
 			if ip~="timeout" then assert(data,ip) end -- timeout is not an error, but anything else is
 		end
@@ -97,6 +86,15 @@ end
 
 sock.get_from=function()
 	return sock.in_udp
+end
+
+sock.send=function(m)
+
+	local d=cmsgpack.pack(m)
+
+	local p=math.random(1,opts.range)-1 -- add this for a random broadcast range
+	assert(sock.out_udp:sendto( d , opts.addr.."%"..opts.device , opts.outport+p ))
+
 end
 
 

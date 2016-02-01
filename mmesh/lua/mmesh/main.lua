@@ -58,56 +58,69 @@ M.bake=function(opts,main)
 		end
 	end
 	print("")
-
-	main.history=require("mmesh.main_history").bake(main)
-	main.sound=require("mmesh.main_sound").bake(main)
-	main.sock=require("mmesh.main_sock").bake(main)
-	main.gpios=require("mmesh.main_gpios").bake(main)
-
-
-main.setup=function()
-
 	
-	main.history.setup()
-	main.sock.setup()
-	main.sound.setup()
-	main.gpios.setup()
-	
-end
-
-
-main.clean=function()
-
-	main.history.clean()
-	main.sock.clean()
-	main.sound.clean()
-	main.gpios.clean()
-
-end
-
-
-main.update=function()
-
-	main.sock.update()
-	main.sound.update()
-	main.gpios.update()
-
-end
-
-
-function main.serv()
-
-	main.setup()
-	
-	print("Starting MMesh loop...")
-	while true do
-		main.update()
-		socket.sleep(0.0001) -- 10khz ish just to keep us idle
+	main.baked={}
+	main.rebake=function(n) -- allow simple cyclic dependencies
+		if not main.baked[n] then
+			main.baked[n]={}
+			require(n).bake(main,main.baked[n])
+		end
+		return main.baked[n]
 	end
 
-	main.clean()
+	local msg     = main.rebake("mmesh.main_msg")
+	local history = main.rebake("mmesh.main_history")
+	local sound   = main.rebake("mmesh.main_sound")
+	local sock    = main.rebake("mmesh.main_sock")
+	local gpios   = main.rebake("mmesh.main_gpios")
 
-end
+
+	main.setup=function()
+
+		
+		msg.setup()
+		history.setup()
+		sock.setup()
+		sound.setup()
+		gpios.setup()
+		
+	end
+
+
+	main.clean=function()
+
+		msg.clean()
+		history.clean()
+		sock.clean()
+		sound.clean()
+		gpios.clean()
+
+	end
+
+
+	main.update=function()
+
+		msg.update()
+		sock.update()
+		sound.update()
+		gpios.update()
+
+	end
+
+
+	function main.serv()
+
+		main.setup()
+		
+		print("Starting MMesh loop...")
+		while true do
+			main.update()
+			socket.sleep(0.0001) -- 10khz ish just to keep us idle
+		end
+
+		main.clean()
+
+	end
 
 
 
