@@ -1,13 +1,11 @@
 # run a bunch of mmesh on diferent ports and have them randomly send packets to that port range as a "simulated" mesh
 
-./start --verbose --range 8 --inport 17071 &
-./start --verbose --range 8 --inport 17072 &
-./start --verbose --range 8 --inport 17073 &
-./start --verbose --range 8 --inport 17074 &
-./start --verbose --range 8 --inport 17075 &
-./start --verbose --range 8 --inport 17076 &
-./start --verbose --range 8 --inport 17077 &
-./start --verbose --range 8 --inport 17078
+./start --verbose --inport 17071 --outport 17072 &
+./start --verbose --inport 17072 --outport 17071
+
+#./start --verbose --inport 17071 --outport 17072 --range 2 &
+#./start --verbose --inport 17072 --outport 17071 &
+#./start --verbose --inport 17073 --outport 17071
 
 # the last one blocks so ctrl-c will run the following to clean them all up
 

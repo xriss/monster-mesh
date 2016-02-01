@@ -64,9 +64,17 @@ msg.opus=function(w)
 	
 	m.idx=msg.opus_idx    -- increment counter, should probably wrap it at 0x7fffffff or something
 	m.time=os.time()     -- local time, probably way out of sync
-	m.from=sock.hostname -- hopefully this is a unique id per device
+	m.from=sock.hostname..":"..opts.inport -- hopefully this is a unique id per device
 
 	history.add_new(m)
+
+	local v={}
+	
+	v.cmd="gots"
+	v.time=os.time()
+	v.gots=history.gots(m.from)
+	
+	sock.send(v)
 	
 end
 
@@ -77,27 +85,51 @@ msg.push=function(m)
 	
 	if     m.cmd=="wants" then -- if we have a requested packet then broadcast it
 
-		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , #m.wants )
+		local t
+		local c=0 for i,v in pairs( m.wants ) do c=c+1 t=t or {i,v} end
+		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , c , c>0 and t[1] , c>0 and t[2] )
 		
 		for addr,idx in pairs(m.wants) do
 			
-			local v=history.best(addr,idx)
-			if v then
-				msg.send(v) -- broadcast this opus msg
-			end
+			repeat
+				local v=history.best(addr,idx)
+
+--print(addr,idx,v, #(history.table[ addr ] or {}) )
+
+				if v then
+					msg.send(v) -- broadcast this opus msg
+				end
+				
+				idx=idx+1
+			until not v
 		
 		end
 
 	elseif m.cmd=="gots" then -- someone is telling us what packets they have
-		local c=0 for i,v in pairs( m.gots ) do c=c+1 end
-		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , c )
+		local t
+		local c=0 for i,v in pairs( m.gots ) do c=c+1 t=t or {i,v} end
+		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , c ,c>0 and t[1],c>0 and t[2])
+		
+		for addr,idx in pairs( m.gots ) do
+			if idx > ( history.max(addr) or 0 ) then -- something new
+
+				local m={} -- new msg
+				
+				m.cmd="wants"
+				m.wants={ [addr] = (history.max(addr) or 0)+1 }
+				m.time=os.time()
+
+				msg.send(m)
+
+			end
+		end
 
 	elseif m.cmd=="opus" then -- keep opus packets in history
 
 		if type(m.hops)=="number" then m.hops=m.hops+1 end -- inc hops
 		history.add_new(m)
 
-		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , m.hops )
+		print( m.from , m.idx , m.cmd , m.time , m.hops )
 
 	else
 

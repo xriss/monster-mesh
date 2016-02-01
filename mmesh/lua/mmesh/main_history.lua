@@ -48,8 +48,8 @@ history.best=function(from,idx)
 	local tab=history.table[ from ]
 	if tab then
 		for i,v in ipairs(tab) do
-			if v.idx<=idx then
-				if not ret or ret.idx>=v.idx then -- look for lowest idx that is the same or greater
+			if v.idx>=idx then
+				if (not ret) or (ret.idx>=v.idx) then -- look for lowest idx that is the same or greater
 					ret=v
 				end
 			end
@@ -71,7 +71,7 @@ end
 -- find the highest idx we have, returns nil if we have none
 history.max=function(from)
 	local tab=history.table[ from ]
-	return tab[#tab] and tab[#tab].idx
+	return tab and tab[#tab] and tab[#tab].idx
 end
 
 -- add a new item to our history cache
@@ -98,7 +98,7 @@ end
 -- this is then sent in a had packet
 history.gots=function(from)
 	if from then -- only this broadcaster please
-		return { from = history.max(from) }
+		return { [from] = history.max(from) }
 	else -- all
 		local r={}
 		for addr,tab in pairs(history.table) do
