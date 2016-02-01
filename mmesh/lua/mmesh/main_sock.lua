@@ -46,7 +46,7 @@ sock.setup=function()
 	assert( t:settimeout(0) )
 	assert( t:setsockname(opts.host,0) )
 	assert( t:setpeername("fe80::1%"..opts.device,opts.outport) ) -- we want the link local address
-	socket.hostname=t:getsockname()
+	sock.hostname=t:getsockname()
 	
 --	print( socket.hostname )
 
@@ -74,7 +74,7 @@ sock.update=function()
 				m._data=data
 				m._ip=ip
 				m._port=port
-				msg.got(m)
+				msg.push(m)
 			end
 		else
 			if ip~="timeout" then assert(data,ip) end -- timeout is not an error, but anything else is

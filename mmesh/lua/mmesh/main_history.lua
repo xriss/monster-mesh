@@ -16,7 +16,11 @@ M.bake=function(main,history)
 
 	local msg     = main.rebake("mmesh.main_msg")
 
+	history.tabmax=64 -- maximum entries for each from addr
 	history.table={}
+
+-- info about currently playing sources
+	history.playing={}
 
 history.setup=function()
 
@@ -39,60 +43,70 @@ end
 
 
 -- a packet has been requested, find the best packet we have to broadcast
-history.best=function(from,id)
+history.best=function(from,idx)
 	local ret
-	if from then
-		local tab=history.table[ from ]
-		if tab then
-			if id then
-				for i,v in ipairs(tab) do
-					if v.id<=id then
-						if not ret or ret.id>=v.id then -- look for lowest id that is the same or greater
-							ret=v
-						end
-					end
+	local tab=history.table[ from ]
+	if tab then
+		for i,v in ipairs(tab) do
+			if v.idx<=idx then
+				if not ret or ret.idx>=v.idx then -- look for lowest idx that is the same or greater
+					ret=v
 				end
 			end
 		end
 	end
-
 	return ret
 end
 
--- find a given packet id only
-history.find=function(from,id)
+-- find a given packet idx only
+history.find=function(from,idx)
 	if from then
 		local tab=history.table[ from ]
 		for i,v in ipairs(tab or {}) do
-			if v.id==id then return v end
+			if v.idx==idx then return v end
 		end
 	end
 end
 
--- find the highest id we have, returns nil if we have none
+-- find the highest idx we have, returns nil if we have none
 history.max=function(from)
-	local tab=history.table[ it.from ]
-	return tab[#tab] and tab[#tab].id
+	local tab=history.table[ from ]
+	return tab[#tab] and tab[#tab].idx
 end
 
 -- add a new item to our history cache
 history.add_new=function(it)
 
-	if it and it.from and it.id then
+	if it and it.from and it.idx then
 	
-		if history.find(it.from,it.id) then return end -- already have this packet...
+		if history.find(it.from,it.idx) then return end -- already have this packet...
 	
 		local tab=history.table[ it.from ] or {}
 		history.table[ it.from ]=tab
 		
-		it._t=os.time() -- remember our time stamp, we strip out all _ prefixed data before passing the msg on
+		it._time=os.time() -- remember our time stamp, we strip out all _ prefixed data before passing the msg on
 		table.insert(tab,it)
-		table.sort(tab,function(a,b) return a<b end) -- keep table sorted
+		table.sort(tab,function(a,b) return a.idx<b.idx end) -- keep table sorted by idx
+		
+		while #tab>history.tabmax do table.remove(tab,1) end
 		
 	end
 
 end
 
+-- return map of highest packet id we have available for each broadcaster in our history
+-- this is then sent in a had packet
+history.gots=function(from)
+	if from then -- only this broadcaster please
+		return { from = history.max(from) }
+	else -- all
+		local r={}
+		for addr,tab in pairs(history.table) do
+			r[addr]=history.max(addr)
+		end
+		return r
+	end
+end
 
 
 	return history

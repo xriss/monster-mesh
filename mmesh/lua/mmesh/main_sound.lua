@@ -25,6 +25,8 @@ M.bake=function(main,sound)
 	local sound=sound or {}
 	sound.modname=M.modname
 
+	local msg     = main.rebake("mmesh.main_msg")
+
 -- configurable defaults
 sound.samplerate=48000
 sound.quality=(sound.samplerate*16)/32
@@ -161,13 +163,15 @@ if sound.dev then
 		assert(sound.encode_siz~=-1)
 --		print(sound.packet_size , sound.encode_siz)
 		sound.decode_dat=wpack.copy(sound.encode_dat,sound.encode_siz) -- trim to correct size
+		
+		msg.opus(sound.decode_dat)
 
-		sound.decode_siz=wopus_core.decode(sound.decoder,sound.decode_dat,sound.decode_wav,0)
+--		sound.decode_siz=wopus_core.decode(sound.decoder,sound.decode_dat,sound.decode_wav,0)
 
-		local wtab,wlen=wpack.load_array( {buffer=sound.decode_wav,sizeof=sound.packet_size*2,offset=0} , "s16")
+--		local wtab,wlen=wpack.load_array( {buffer=sound.decode_wav,sizeof=sound.packet_size*2,offset=0} , "s16")
 --print(sound.packet_size,#wtab,wlen)
 
-		sound.wav_queue[ #sound.wav_queue+1 ]=wpack.copy(sound.decode_wav,sound.packet_size*2)
+--		sound.wav_queue[ #sound.wav_queue+1 ]=wpack.copy(sound.decode_wav,sound.packet_size*2)
 		
 --print("sound in",sound.encode_siz,sound.decode_siz,sound.decode_dat)
 
@@ -191,7 +195,30 @@ print((sound.encode_siz),#pd1.." > "..#pz1,#pd2.." > "..#pz2)
 	end
 end
 
+-- dumb rawlua sound mixing (probably an okish speed actually thanks to luajit)
+-- mix all insraw buffers into outraw,
+-- all buffers are len samples long
+sound.mix_s16=function(insraw,outraw,len)
 
+-- convert raw data to lua arrays
+	local inslen=#insraw
+	local ins={}
+	local out={}
+	for i=1,inslen do
+		ins[i]=wpack.load_array(insraw[i],"s16",0,len)
+	end
+
+-- then software mix, all at same volume
+	for idx=1,len do
+		local t=0
+		for i=1,inslen do t=t+ins[i][idx] end
+		out[idx]=t
+	end
+
+-- then spit it into a buffer, sound clipping problem?
+	wpack.save_array(out,"s16",0,len,outraw)
+
+end
 
 end
 

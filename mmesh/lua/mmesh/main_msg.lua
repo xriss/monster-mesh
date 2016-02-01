@@ -15,6 +15,7 @@ M.bake=function(main,msg)
 	msg.modname=M.modname
 
 	local sock    = main.rebake("mmesh.main_sock")
+	local history = main.rebake("mmesh.main_history")
 
 msg.setup=function()
 
@@ -36,9 +37,10 @@ msg.update=function()
 
 		local m={}
 		
-		m.cmd="test"
-		m.id=0
-		m.t=nowtime
+		m.cmd="gots"
+		m.time=nowtime
+		m.gots=history.gots()
+		
 		sock.send(m)
 
 	end
@@ -46,10 +48,63 @@ msg.update=function()
 end
 
 
--- push msgs into here
-msg.got=function(m)
+-- push new (localy generated) opus packet data into here
+-- we add meta data and send it to history for later use
+msg.opus_idx=0
+msg.opus=function(w)
 
-	print( m._ip, m._port.."->"..opts.inport , m.cmd , m.id , m.t )
+	msg.opus_idx=msg.opus_idx+1
+
+	local m={} -- new msg
+	
+	m._local=true -- flag as generated on this machine
+	m.cmd="opus"
+	m.opus=w
+	m.hops=0	-- number of hops to get to us, inc when received
+	
+	m.idx=msg.opus_idx    -- increment counter, should probably wrap it at 0x7fffffff or something
+	m.time=os.time()     -- local time, probably way out of sync
+	m.from=sock.hostname -- hopefully this is a unique id per device
+
+	history.add_new(m)
+	
+end
+
+
+-- push msgs into here
+msg.push=function(m)
+
+	
+	if     m.cmd=="wants" then -- if we have a requested packet then broadcast it
+
+		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , #m.wants )
+		
+		for addr,idx in pairs(m.wants) do
+			
+			local v=history.best(addr,idx)
+			if v then
+				msg.send(v) -- broadcast this opus msg
+			end
+		
+		end
+
+	elseif m.cmd=="gots" then -- someone is telling us what packets they have
+		local c=0 for i,v in pairs( m.gots ) do c=c+1 end
+		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , c )
+
+	elseif m.cmd=="opus" then -- keep opus packets in history
+
+		if type(m.hops)=="number" then m.hops=m.hops+1 end -- inc hops
+		history.add_new(m)
+
+		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , m.hops )
+
+	else
+
+		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time )
+	
+	end
+	
 --[[
 	m.test={ok="ok",_ok="_ok"}
 	dprint( m )
