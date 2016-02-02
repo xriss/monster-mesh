@@ -18,6 +18,27 @@ M.bake=function(main,msg)
 
 	local sock    = main.rebake("mmesh.main_sock")
 	local history = main.rebake("mmesh.main_history")
+	
+msg.str={}
+
+-- convert time to something printable
+msg.str.time=function(v) -- ignore top bits
+	return string.format("%04d",math.floor(100*(v%100)))
+end
+
+-- convert ip to something printable
+msg.str.ip=function(v)
+	local p=#v+1
+	local l=msg.str.ip_last
+	msg.str.ip_last=v
+	if l then
+		for i=1,#v do
+			if l:sub(1,i) ~= v:sub(1,i) then p=i break end
+		end
+	end
+	return v:sub(p) -- the unique part ( compared to the last ip ) 
+end
+
 
 msg.setup=function()
 
@@ -29,23 +50,61 @@ msg.clean=function()
 end
 
 
--- send out pulse msgs from here
-msg.time=0
+-- we can handle pulse style repetitive actions here
+msg.time_1s=0
+msg.time_500ms=0
+msg.time_200ms=0
 msg.update=function()
 
 	local nowtime=socket.gettime()
-	if nowtime>msg.time then -- every second
-		msg.time=nowtime
 
-		local m={}
-		
-		m.cmd="gots"
-		m.time=nowtime
-		m.gots=history.gots()
-		
-		sock.send(m)
+	if nowtime>=msg.time_1s+1 then -- every second
+		msg.time_1s=nowtime
+
 
 	end
+
+	if nowtime>=msg.time_500ms+0.5 then -- every 500ms
+		msg.time_500ms=nowtime
+		
+		msg.send_gots()
+		
+	end
+
+	if nowtime>=msg.time_200ms+0.2 then -- every 200ms
+		msg.time_200ms=nowtime
+		
+		msg.send_wants()
+		
+	end
+
+end
+
+-- check what we have and whats available
+-- then send out our gots and wants
+msg.send_wants=function()
+
+	local m={}
+	
+	m.cmd="wants"
+	m.time=socket.gettime()
+	m.wants=history.wants()
+	
+--	sock.send(m)
+
+end
+
+-- check what we have and whats available
+-- then send out our gots and wants
+msg.send_gots=function()
+
+	local m={}
+	
+	m.cmd="gots"
+	m.time=socket.gettime()
+	m.gots=history.gots()
+	
+	sock.send(m)
 
 end
 
@@ -68,7 +127,7 @@ msg.opus=function(w)
 	m.time=socket.gettime()     -- local time, probably way out of sync
 	m.from=sock.hostname..":"..opts.inport -- hopefully this is a unique id per device
 
-	history.add_new(m)
+	history.new_opus(m)
 
 	local v={}
 	
@@ -89,7 +148,7 @@ msg.push=function(m)
 
 		local t
 		local c=0 for i,v in pairs( m.wants ) do c=c+1 t=t or {i,v} end
-		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , c , c>0 and t[1] , c>0 and t[2] )
+		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) , c , c>0 and t[1] , c>0 and t[2] )
 		
 		for addr,idx in pairs(m.wants) do
 			
@@ -110,18 +169,18 @@ msg.push=function(m)
 	elseif m.cmd=="gots" then -- someone is telling us what packets they have
 		local t
 		local c=0 for i,v in pairs( m.gots ) do c=c+1 t=t or {i,v} end
-		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time , c ,c>0 and t[1],c>0 and t[2])
+		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) , c ,c>0 and msg.str.ip(t[1]),c>0 and t[2])
 		
 		for addr,idx in pairs( m.gots ) do
 			if idx > ( history.max(addr) or 0 ) then -- something new
 
-				local m={} -- new msg
+--				local m={} -- new msg
 				
-				m.cmd="wants"
-				m.wants={ [addr] = (history.max(addr) or 0)+1 }
-				m.time=socket.gettime()
+--				m.cmd="wants"
+--				m.wants={ [addr] = (history.max(addr) or 0)+1 }
+--				m.time=socket.gettime()
 
-				msg.send(m)
+--				msg.send(m)
 
 			end
 		end
@@ -129,13 +188,14 @@ msg.push=function(m)
 	elseif m.cmd=="opus" then -- keep opus packets in history
 
 		if type(m.hops)=="number" then m.hops=m.hops+1 end -- inc hops
-		history.add_new(m)
+		
+		history.new_opus(m)
 
-		print( m.from , m.idx , m.cmd , m.time , m.hops )
+		print( msg.str.ip(m.from) , m.idx , m.cmd , msg.str.time(m.time) , m.hops )
 
 	else
 
-		print( m._ip, m._port.."->"..opts.inport , m.cmd , m.time )
+		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) )
 	
 	end
 	

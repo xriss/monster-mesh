@@ -18,11 +18,22 @@ M.bake=function(main,history)
 
 	local msg     = main.rebake("mmesh.main_msg")
 
-	history.tabmax=64 -- maximum entries for each from addr
-	history.table={}
+-- our history of opus packets that we can play and or pass on to others
+-- indexed by source name
+	history.opus={}
+	history.opus_max=64      -- maximum entries to keep for each addr
+	history.opus_lifetime=64 -- how long do we keep these entries alive 
 
--- info about currently playing sources
-	history.playing={}
+-- info about currently playing sources, ie the last sound we made
+-- indexed by source name
+	history.play={}
+	history.play_lifetime=64 -- how long do we keep these entries alive 
+
+-- info about currently available sources and from who they are available
+-- indexed by source name
+	history.avail={}
+	history.avail_lifetime=32 -- how long do we keep these entries alive 
+
 
 history.setup=function()
 
@@ -37,7 +48,21 @@ end
 
 history.remove_old=function()
 
-	for addr,tab in pairs(history.table) do
+	local nowtime=socket.gettime()
+
+	for i=#history.avail,1,-1 do local v=history.avail[i]
+		if  v.time > nowtime+history.avail_lifetime then
+			table.remove(history.avail,i)
+		end
+	end
+
+	for i=#history.play,1,-1 do local v=history.play[i]
+		if  v.time > nowtime+history.play_lifetime then
+			table.remove(history.play,i)
+		end
+	end
+
+	for addr,tab in pairs(history.opus) do
 		while #tab>history.max do table.remove(tab,1) end
 	end
 
@@ -47,7 +72,7 @@ end
 -- a packet has been requested, find the best packet we have to broadcast
 history.best=function(from,idx)
 	local ret
-	local tab=history.table[ from ]
+	local tab=history.opus[ from ]
 	if tab then
 		for i,v in ipairs(tab) do
 			if v.idx>=idx then
@@ -63,7 +88,7 @@ end
 -- find a given packet idx only
 history.find=function(from,idx)
 	if from then
-		local tab=history.table[ from ]
+		local tab=history.opus[ from ]
 		for i,v in ipairs(tab or {}) do
 			if v.idx==idx then return v end
 		end
@@ -72,42 +97,60 @@ end
 
 -- find the highest idx we have, returns nil if we have none
 history.max=function(from)
-	local tab=history.table[ from ]
+	local tab=history.opus[ from ]
 	return tab and tab[#tab] and tab[#tab].idx
 end
 
 -- add a new item to our history cache
-history.add_new=function(it)
+history.new_opus=function(it)
 
 	if it and it.from and it.idx then
 	
 		if history.find(it.from,it.idx) then return end -- already have this packet...
 	
-		local tab=history.table[ it.from ] or {}
-		history.table[ it.from ]=tab
+		local tab=history.opus[ it.from ] or {}
+		history.opus[ it.from ]=tab
 		
 		it._time=socket.gettime() -- remember our time stamp, we strip out all _ prefixed data before passing the msg on
 		table.insert(tab,it)
 		table.sort(tab,function(a,b) return a.idx<b.idx end) -- keep table sorted by idx
 		
-		while #tab>history.tabmax do table.remove(tab,1) end
+		while #tab>history.opus_max do table.remove(tab,1) end
 		
 	end
 
 end
 
--- return map of highest packet id we have available for each broadcaster in our history
+-- return map of highest packet id we have available from each broadcaster in our history
 -- this is then sent in a had packet
 history.gots=function(from)
 	if from then -- only this broadcaster please
 		return { [from] = history.max(from) }
 	else -- all
 		local r={}
-		for addr,tab in pairs(history.table) do
+		for addr,tab in pairs(history.opus) do
 			r[addr]=history.max(addr)
 		end
 		return r
 	end
+end
+
+-- return map of packets we can see (other peoples gots) that we want
+history.wants=function(from)
+
+--	for addr,idx in pairs( m.gots ) do
+--		if idx > ( history.max(addr) or 0 ) then -- something new
+
+--			local m={} -- new msg
+			
+--			m.cmd="wants"
+--			m.wants={ [addr] = (history.max(addr) or 0)+1 }
+--			m.time=socket.gettime()
+
+--			msg.send(m)
+
+--		end
+--	end
 end
 
 
