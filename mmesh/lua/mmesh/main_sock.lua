@@ -15,7 +15,7 @@ local function dprint(a) print(wstr.dump(a)) end
 -- turn a timeout into a success
 local oktimeout=function(...)
 	local a={...}
-	if not a[1] and a[2]=="timeout" then return true,a[2] end
+	if not a[1] and a[2]=="timeout" then a[1]=true return unpack(a) end
 	return ...
 end
 
@@ -93,7 +93,7 @@ sock.send=function(m)
 	local d=cmsgpack.pack(m)
 
 	local p=math.random(1,opts.range)-1 -- add this for a random broadcast range
-	assert(sock.out_udp:sendto( d , opts.addr.."%"..opts.device , opts.outport+p ))
+	assert(oktimeout(sock.out_udp:sendto( d , opts.addr.."%"..opts.device , opts.outport+p )))
 
 end
 

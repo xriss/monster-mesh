@@ -1,6 +1,8 @@
 -- copy all globals into locals, some locals are prefixed with a G to reduce name clashes
 local coroutine,package,string,table,math,io,os,debug,assert,dofile,error,_G,getfenv,getmetatable,ipairs,Gload,loadfile,loadstring,next,pairs,pcall,print,rawequal,rawget,rawset,select,setfenv,setmetatable,tonumber,tostring,type,unpack,_VERSION,xpcall,module,require=coroutine,package,string,table,math,io,os,debug,assert,dofile,error,_G,getfenv,getmetatable,ipairs,load,loadfile,loadstring,next,pairs,pcall,print,rawequal,rawget,rawset,select,setfenv,setmetatable,tonumber,tostring,type,unpack,_VERSION,xpcall,module,require
 
+local socket=require("socket")
+
 local wstr     = require("wetgenes.string")
 
 
@@ -31,7 +33,7 @@ end
 msg.time=0
 msg.update=function()
 
-	local nowtime=os.time()
+	local nowtime=socket.gettime()
 	if nowtime>msg.time then -- every second
 		msg.time=nowtime
 
@@ -63,7 +65,7 @@ msg.opus=function(w)
 	m.hops=0	-- number of hops to get to us, inc when received
 	
 	m.idx=msg.opus_idx    -- increment counter, should probably wrap it at 0x7fffffff or something
-	m.time=os.time()     -- local time, probably way out of sync
+	m.time=socket.gettime()     -- local time, probably way out of sync
 	m.from=sock.hostname..":"..opts.inport -- hopefully this is a unique id per device
 
 	history.add_new(m)
@@ -71,7 +73,7 @@ msg.opus=function(w)
 	local v={}
 	
 	v.cmd="gots"
-	v.time=os.time()
+	v.time=socket.gettime()
 	v.gots=history.gots(m.from)
 	
 	sock.send(v)
@@ -117,7 +119,7 @@ msg.push=function(m)
 				
 				m.cmd="wants"
 				m.wants={ [addr] = (history.max(addr) or 0)+1 }
-				m.time=os.time()
+				m.time=socket.gettime()
 
 				msg.send(m)
 

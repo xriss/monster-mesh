@@ -1,6 +1,8 @@
 -- copy all globals into locals, some locals are prefixed with a G to reduce name clashes
 local coroutine,package,string,table,math,io,os,debug,assert,dofile,error,_G,getfenv,getmetatable,ipairs,Gload,loadfile,loadstring,next,pairs,pcall,print,rawequal,rawget,rawset,select,setfenv,setmetatable,tonumber,tostring,type,unpack,_VERSION,xpcall,module,require=coroutine,package,string,table,math,io,os,debug,assert,dofile,error,_G,getfenv,getmetatable,ipairs,load,loadfile,loadstring,next,pairs,pcall,print,rawequal,rawget,rawset,select,setfenv,setmetatable,tonumber,tostring,type,unpack,_VERSION,xpcall,module,require
 
+local socket=require("socket")
+
 local cmsgpack = require("cmsgpack")       
 local wstr     = require("wetgenes.string")
 
@@ -84,7 +86,7 @@ history.add_new=function(it)
 		local tab=history.table[ it.from ] or {}
 		history.table[ it.from ]=tab
 		
-		it._time=os.time() -- remember our time stamp, we strip out all _ prefixed data before passing the msg on
+		it._time=socket.gettime() -- remember our time stamp, we strip out all _ prefixed data before passing the msg on
 		table.insert(tab,it)
 		table.sort(tab,function(a,b) return a.idx<b.idx end) -- keep table sorted by idx
 		
