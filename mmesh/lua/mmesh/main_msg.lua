@@ -23,11 +23,15 @@ msg.str={}
 
 -- convert time to something printable
 msg.str.time=function(v) -- ignore top bits
+	if not v then return end
 	return string.format("%04d",math.floor(100*(v%100)))
 end
 
 -- convert ip to something printable
 msg.str.ip=function(v)
+	if not v then return end
+	return v:sub(-16)
+--[[
 	local p=#v+1
 	local l=msg.str.ip_last
 	msg.str.ip_last=v
@@ -36,7 +40,54 @@ msg.str.ip=function(v)
 			if l:sub(1,i) ~= v:sub(1,i) then p=i break end
 		end
 	end
-	return v:sub(p) -- the unique part ( compared to the last ip ) 
+	if p==#v+1 then return "." end
+	return v:sub(p) -- the unique part ( compared to the last ip we printed ) 
+]]
+end
+
+msg.str.ipmember=function(t)
+	if not t then return end
+	local idx,val,count
+	count=0
+	for i,v in pairs(t) do
+		if not idx then idx=i val=v end
+		count=count+1
+	end
+	if idx and val and count then
+		if type(idx)=="string" then
+			return idx:sub(-16).."+"..string.format("%04d",(tonumber(val) or 0)).."#"..count
+		else
+			return "?-?-"..idx
+		end
+	end
+end
+
+-- convert a msg into a string and print it
+msg.print=function(m)
+	local s="%16s %8s %8s %16s"
+	local t={"","","",""}
+
+	t[1]=msg.str.ip(m._addr or m.from) or "?"
+	t[2]=m.cmd
+	t[3]=msg.str.time(m.time) or "????"
+
+	if     m.cmd=="gots" then
+	
+		t[4]=msg.str.ipmember(m.gots) or "?"
+
+	elseif m.cmd=="wants" then
+
+		t[4]=msg.str.ipmember(m.wants) or "?"
+
+	elseif m.cmd=="opus" then
+
+		t[4]="#"..#m.opus
+
+	else
+	
+	end
+
+	print( string.format(s,unpack(t)) )
 end
 
 
@@ -142,23 +193,20 @@ end
 
 -- push msgs into here
 msg.push=function(m)
-
 	
 	if     m.cmd=="wants" then -- if we have a requested packet then broadcast it
 
 		local t
 		local c=0 for i,v in pairs( m.wants ) do c=c+1 t=t or {i,v} end
-		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) , c , c>0 and t[1] , c>0 and t[2] )
+		msg.print(m)
 		
 		for addr,idx in pairs(m.wants) do
 			
 			repeat
 				local v=history.best(addr,idx)
 
---print(addr,idx,v, #(history.table[ addr ] or {}) )
-
 				if v then
-					msg.send(v) -- broadcast this opus msg
+					msg.send(v) -- broadcast the requested opus packet
 				end
 				
 				idx=idx+1
@@ -169,10 +217,11 @@ msg.push=function(m)
 	elseif m.cmd=="gots" then -- someone is telling us what packets they have
 		local t
 		local c=0 for i,v in pairs( m.gots ) do c=c+1 t=t or {i,v} end
-		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) , c ,c>0 and msg.str.ip(t[1]),c>0 and t[2])
+		msg.print(m)
+--		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) , c ,c>0 and msg.str.ip(t[1]),c>0 and t[2])
 		
-		for addr,idx in pairs( m.gots ) do
-			if idx > ( history.max(addr) or 0 ) then -- something new
+--		for addr,idx in pairs( m.gots ) do
+--			if idx > ( history.max(addr) or 0 ) then -- something new
 
 --				local m={} -- new msg
 				
@@ -182,8 +231,8 @@ msg.push=function(m)
 
 --				msg.send(m)
 
-			end
-		end
+--			end
+--		end
 
 	elseif m.cmd=="opus" then -- keep opus packets in history
 
@@ -191,19 +240,14 @@ msg.push=function(m)
 		
 		history.new_opus(m)
 
-		print( msg.str.ip(m.from) , m.idx , m.cmd , msg.str.time(m.time) , m.hops )
+		msg.print(m)
 
 	else
 
-		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) )
+		msg.print(m)
 	
 	end
 	
---[[
-	m.test={ok="ok",_ok="_ok"}
-	dprint( m )
-	dprint( msg.filter(m) )
-]]
 
 end
 

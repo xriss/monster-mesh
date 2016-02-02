@@ -74,6 +74,7 @@ sock.update=function()
 				m._data=data
 				m._ip=ip
 				m._port=port
+				m._addr=ip..":"..port
 				msg.push(m)
 			end
 		else
