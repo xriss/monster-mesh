@@ -55,7 +55,7 @@ history.remove_old=function()
 
 	history.avail_count=0
 	for addr,v in pairs(history.avail) do
-		if v._time and ( v._time > nowtime+history.avail_lifetime ) then
+		if v.time and ( v.time > nowtime+history.avail_lifetime ) then
 			history.avail[addr]=nil
 		end
 		history.avail_count=history.avail_count+1
@@ -63,7 +63,7 @@ history.remove_old=function()
 
 	history.play_count=0
 	for addr,v in pairs(history.play) do
-		if v._time and ( v._time > nowtime+history.play_lifetime ) then
+		if v.time and ( v.time > nowtime+history.play_lifetime ) then
 			history.play[addr]=nil
 		end
 		history.play_count=history.play_count+1
@@ -83,7 +83,7 @@ history.remove_old=function()
 		end
 	end
 
---print("COUNTS",history.avail_count,history.play_count,history.opus_count)
+print("COUNTS",history.avail_count,history.play_count,history.opus_count)
 
 end
 
@@ -140,6 +140,29 @@ history.new_opus=function(it)
 
 end
 
+-- update the availablity from this host
+history.new_gots=function(m)
+
+	local nowtime=socket.gettime()
+
+	if type(m.gots)=="table" then
+		for addr,idx in pairs( m.gots ) do
+			if type(addr)=="string" and type(idx)=="number" then
+				local it=history.avail[addr] or {idx=0}
+				history.avail[addr]=it
+				if idx > it.idx then -- only higher indexs count
+					it.idx=idx
+					it.time=nowtime
+				end
+				it._ip  =m._ip		-- remember where this data came from
+				it._port=m._port
+				it._addr=m._addr
+			end
+		end
+	end
+
+end
+
 -- return map of highest packet id we have available from each broadcaster in our history
 -- this is then sent in a had packet
 history.gots=function(from)
@@ -155,21 +178,19 @@ history.gots=function(from)
 end
 
 -- return map of packets we can see (other peoples gots) that we want
+-- or nil if there is nothing we can see
 history.wants=function(from)
 
---	for addr,idx in pairs( m.gots ) do
---		if idx > ( history.max(addr) or 0 ) then -- something new
-
---			local m={} -- new msg
-			
---			m.cmd="wants"
---			m.wants={ [addr] = (history.max(addr) or 0)+1 }
---			m.time=socket.gettime()
-
---			msg.send(m)
-
---		end
---	end
+	local r={}
+	local count=0
+	for addr,it in pairs( history.avail ) do
+		local mx=history.max(addr) or 0
+		if it.idx > mx then
+			r[addr]=mx+1
+			count=count+1
+		end
+	end
+	if count>0 then return r end
 end
 
 

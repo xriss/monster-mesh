@@ -31,18 +31,6 @@ end
 msg.str.ip=function(v)
 	if not v then return end
 	return v:sub(-16)
---[[
-	local p=#v+1
-	local l=msg.str.ip_last
-	msg.str.ip_last=v
-	if l then
-		for i=1,#v do
-			if l:sub(1,i) ~= v:sub(1,i) then p=i break end
-		end
-	end
-	if p==#v+1 then return "." end
-	return v:sub(p) -- the unique part ( compared to the last ip we printed ) 
-]]
 end
 
 msg.str.ipmember=function(t)
@@ -138,11 +126,13 @@ msg.send_wants=function()
 	local m={}
 	
 	m.cmd="wants"
+	m.from=sock.addr
 	m.time=socket.gettime()
 	m.wants=history.wants()
 	
---	sock.send(m)
-
+	if m.wants then
+		sock.send(m)
+	end
 end
 
 -- check what we have and whats available
@@ -191,8 +181,6 @@ msg.push=function(m)
 	
 	if     m.cmd=="wants" then -- if we have a requested packet then broadcast it
 
-		local t
-		local c=0 for i,v in pairs( m.wants ) do c=c+1 t=t or {i,v} end
 		msg.print(m)
 		
 		for addr,idx in pairs(m.wants) do
@@ -201,7 +189,7 @@ msg.push=function(m)
 				local v=history.best(addr,idx)
 
 				if v then
-					msg.send(v) -- broadcast the requested opus packet
+					msg.send(v) -- just broadcast any requested opus packets we have
 				end
 				
 				idx=idx+1
@@ -210,32 +198,17 @@ msg.push=function(m)
 		end
 
 	elseif m.cmd=="gots" then -- someone is telling us what packets they have
-		local t
-		local c=0 for i,v in pairs( m.gots ) do c=c+1 t=t or {i,v} end
+
 		msg.print(m)
---		print( msg.str.ip(m._ip), m._port.."->"..opts.inport , m.cmd , msg.str.time(m.time) , c ,c>0 and msg.str.ip(t[1]),c>0 and t[2])
-		
---		for addr,idx in pairs( m.gots ) do
---			if idx > ( history.max(addr) or 0 ) then -- something new
 
---				local m={} -- new msg
-				
---				m.cmd="wants"
---				m.wants={ [addr] = (history.max(addr) or 0)+1 }
---				m.time=socket.gettime()
-
---				msg.send(m)
-
---			end
---		end
+		history.new_gots(m)
 
 	elseif m.cmd=="opus" then -- keep opus packets in history
 
-		if type(m.hops)=="number" then m.hops=m.hops+1 end -- inc hops
+		if type(m.hops)=="number" then m.hops=m.hops+1 end -- inc hops as the msg passes through
+		msg.print(m)
 		
 		history.new_opus(m)
-
-		msg.print(m)
 
 	else
 
