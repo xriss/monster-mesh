@@ -112,7 +112,7 @@ msg.update=function()
 	if nowtime>=msg.time_1s+1 then -- every second
 		msg.time_1s=nowtime
 
-
+		history.remove_old() -- make sure we forget
 	end
 
 	if nowtime>=msg.time_500ms+0.5 then -- every 500ms

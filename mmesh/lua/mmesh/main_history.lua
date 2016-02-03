@@ -21,17 +21,20 @@ M.bake=function(main,history)
 -- our history of opus packets that we can play and or pass on to others
 -- indexed by source name
 	history.opus={}
-	history.opus_max=64      -- maximum entries to keep for each addr
+	history.opus_count=0
 	history.opus_lifetime=64 -- how long do we keep these entries alive 
+	history.opus_max=64      -- maximum entries to keep for each addr
 
 -- info about currently playing sources, ie the last sound we made
 -- indexed by source name
 	history.play={}
+	history.play_count=0
 	history.play_lifetime=64 -- how long do we keep these entries alive 
 
 -- info about currently available sources and from who they are available
 -- indexed by source name
 	history.avail={}
+	history.avail_count=0
 	history.avail_lifetime=32 -- how long do we keep these entries alive 
 
 
@@ -50,21 +53,37 @@ history.remove_old=function()
 
 	local nowtime=socket.gettime()
 
-	for i=#history.avail,1,-1 do local v=history.avail[i]
-		if  v.time > nowtime+history.avail_lifetime then
-			table.remove(history.avail,i)
+	history.avail_count=0
+	for addr,v in pairs(history.avail) do
+		if v._time and ( v._time > nowtime+history.avail_lifetime ) then
+			history.avail[addr]=nil
 		end
+		history.avail_count=history.avail_count+1
 	end
 
-	for i=#history.play,1,-1 do local v=history.play[i]
-		if  v.time > nowtime+history.play_lifetime then
-			table.remove(history.play,i)
+	history.play_count=0
+	for addr,v in pairs(history.play) do
+		if v._time and ( v._time > nowtime+history.play_lifetime ) then
+			history.play[addr]=nil
 		end
+		history.play_count=history.play_count+1
 	end
 
+	history.opus_count=0
 	for addr,tab in pairs(history.opus) do
-		while #tab>history.max do table.remove(tab,1) end
+		while #tab>history.opus_max do table.remove(tab,1) end
+		for i=#tab,1,-1 do local v=tab[i]
+			if v._time and ( v._time  > nowtime+history.opus_lifetime ) then
+				table.remove(tab,i)
+			end
+			history.opus_count=history.opus_count+1
+		end
+		if #tab==0 then -- forget an empty tab
+			history.opus[addr]=nil
+		end
 	end
+
+--print("COUNTS",history.avail_count,history.play_count,history.opus_count)
 
 end
 
