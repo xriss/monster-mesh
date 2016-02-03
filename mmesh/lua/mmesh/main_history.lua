@@ -193,6 +193,39 @@ history.wants=function(from)
 	if count>0 then return r end
 end
 
+history.get_play_packets=function()
+	local t={}
+	
+	for addr,tab in pairs(history.opus) do
+	
+		if tab[1] then -- make sure there are some packets incase we decide to start playing
+		
+			if not tab[1]._local then -- ignore any localy generated packets ( do not play them )
+	
+				local play=history.play[addr] -- get current play info
+				if not play then -- initialise play info if necesarryt
+					play={}
+					history.play[addr]=play
+					play.time=socket.gettime()
+					play.idx=0
+				end
+
+				for i,v in ipairs(tab) do
+					if v.idx>play.idx then -- found a new idx
+						table.insert(t,v)
+						play.time=socket.gettime() -- keep alive
+						play.idx=v.idx
+						break
+					end
+				end
+			end
+		end
+		
+	end
+	
+	return t -- table of indexs that should be mixxed
+end
+
 
 	return history
 end

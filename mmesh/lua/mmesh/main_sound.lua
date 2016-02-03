@@ -25,6 +25,7 @@ M.bake=function(main,sound)
 	local sound=sound or {}
 	sound.modname=M.modname
 
+	local history = main.rebake("mmesh.main_history")
 	local msg     = main.rebake("mmesh.main_msg")
 
 -- configurable defaults
@@ -116,7 +117,7 @@ sound.update=function()
 	if not sound.active then return end
 
 
--- remove finished buffers
+-- remove finished buffers from buffers_queue and place them in buffers_empty
 	for i=1,al.GetSource(sound.source,al.BUFFERS_PROCESSED) do
 		local b=al.SourceUnqueueBuffer(sound.source)
 		local idx
@@ -129,12 +130,14 @@ sound.update=function()
 --print("unqueue ",b)
 	end
 
+-- fill any buffers in buffers_empty with data from sound.wav_queue and then place them in buffers_queue
 	if sound.buffers_empty[1] and sound.wav_queue[1] then -- fill the empty queue
 		local b=sound.buffers_empty[1]
+		
 		sound.wav_played[#sound.wav_played+1]=sound.wav_queue[1]
 		al.BufferData(b,al.FORMAT_MONO16,sound.wav_queue[1],sound.packet_size*2,sound.samplerate)
 		table.remove(sound.wav_queue,1)
---		wopus_core.echo_playback(sound.echo,sound.decode_wav)
+
 		al.SourceQueueBuffer(sound.source,b)
 --print("queue ",b)
 		table.remove(sound.buffers_empty,1)
@@ -149,6 +152,36 @@ sound.update=function()
 	end
 
 if sound.dev then
+	local c=alc.Get(sound.dev,alc.CAPTURE_SAMPLES) -- check available samples
+	if c>=sound.packet_size then -- we have one packets worth so grab it and encode
+	
+-- capture some audio
+		alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
+		
+		if sound.wav_played[1] then
+-- push the last sound we played into the echo cancellation engine
+			wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,sound.wav_played[1],sound.encode_wav)
+			if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove this used buffer
+			while sound.wav_played[2] do table.remove(sound.wav_played,2) end -- trim the fat so we don't get too far ahead
+-- encode to an opus packet with echo cancellation
+			sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat) 
+-- check for encoder errors
+			assert(sound.encode_siz~=-1)
+		else
+-- encode to an opus packet without echo cancellation
+			sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav_echo,sound.encode_dat)
+-- check for encoder errors
+			assert(sound.encode_siz~=-1)
+		end
+
+-- remember the compressed opus packet and broadcast it	out to anyone listening
+		msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+
+
+	end
+end
+
+if false then
 	local c=alc.Get(sound.dev,alc.CAPTURE_SAMPLES) -- available samples
 	if c>=sound.packet_size then
 	
@@ -195,6 +228,22 @@ print((sound.encode_siz),#pd1.." > "..#pz1,#pd2.." > "..#pz2)
 	end
 end
 
+	if not sound.wav_queue[1] then -- make sure we always have something ready to push into the play buffers
+
+		sound.mix_s16_init( sound.packet_size )
+		
+		for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
+		
+			sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
+			sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+			
+		end
+		
+		sound.wav_queue[1]=sound.mix_s16_pull()
+	end
+
+end
+
 -- dumb rawlua sound mixing (probably an okish speed actually thanks to luajit)
 -- all buffers are len samples long
 sound.mix_s16_init=function(len) -- initialise data to this size
@@ -203,23 +252,28 @@ sound.mix_s16_init=function(len) -- initialise data to this size
 	
 	sound.mix_s16_push=function(buff) -- add this sound buffer to the data
 
-		local t=wpack.load_array(buff,"s16",0,len)
-		for i=1,len do data[i]=data[i]+t[i] end -- add
+		local t=wpack.load_array(buff,"s16",0,len*2)
+
+--print(len,#data,#t)
+		for i=1,len do
+			data[i] = data[i] + t[i] -- add
+		end
 		
 	end
 	
-	sound.mix_s16_pull=function(buff) -- save the data into this buffer
+	sound.mix_s16_pull=function() -- save the data to a string
 
-		wpack.save_array(data,"s16",0,len,buff)
+		local r=wpack.save_array(data,"s16",0,len)
+
+--print(#r)
+
+		return r
 
 	end
 
 end
 sound.mix_s16_push=function()end -- sanity
 sound.mix_s16_pull=function()end -- and safety
-
-
-end
 
 
 	return sound
