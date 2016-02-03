@@ -30,12 +30,12 @@ M.bake=function(main,sound)
 
 -- configurable defaults
 sound.samplerate=48000
-sound.quality=(sound.samplerate*16)/4	-- opus bitrate, we want audio packets of around about 1k
-sound.packet_ms=40 --60
+sound.quality=(sound.samplerate*16)/16	-- opus bitrate, I think we want audio packets of less than 1k each
+sound.packet_ms=60 --60
 sound.packet_size=sound.packet_ms*sound.samplerate/1000
-sound.echo_ms=sound.packet_ms*10 -- sound.packet_ms*3
+sound.echo_ms=sound.packet_ms*5 -- sound.packet_ms*3
 sound.echo_size=sound.echo_ms*sound.samplerate/1000
-sound.playback_buffers=math.floor(200/sound.packet_ms)
+sound.playback_buffers=math.floor(240/sound.packet_ms)
 
 sound.echo_count=0
 

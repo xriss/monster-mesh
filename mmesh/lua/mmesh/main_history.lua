@@ -83,7 +83,7 @@ history.remove_old=function()
 		end
 	end
 
-print("COUNTS",history.avail_count,history.play_count,history.opus_count)
+-- print("COUNTS",history.avail_count,history.play_count,history.opus_count)
 
 end
 
