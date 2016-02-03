@@ -18,18 +18,18 @@ M.bake=function(main,history)
 
 	local msg     = main.rebake("mmesh.main_msg")
 
--- our history of opus packets that we can play and or pass on to others
--- indexed by source name
-	history.opus={}
-	history.opus_count=0
-	history.opus_lifetime=64 -- how long do we keep these entries alive 
-	history.opus_max=64      -- maximum entries to keep for each addr
-
 -- info about currently playing sources, ie the last sound we made
 -- indexed by source name
 	history.play={}
 	history.play_count=0
 	history.play_lifetime=64 -- how long do we keep these entries alive 
+
+-- our history of opus packets that we can play and or pass on to others
+-- indexed by source name
+	history.opus={}
+	history.opus_count=0
+	history.opus_lifetime=48 -- how long do we keep these entries alive 
+	history.opus_max=64       -- maximum entries to keep for each addr (much more restrictive than lifetime)
 
 -- info about currently available sources and from who they are available
 -- indexed by source name

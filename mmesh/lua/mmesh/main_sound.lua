@@ -196,29 +196,28 @@ print((sound.encode_siz),#pd1.." > "..#pz1,#pd2.." > "..#pz2)
 end
 
 -- dumb rawlua sound mixing (probably an okish speed actually thanks to luajit)
--- mix all insraw buffers into outraw,
 -- all buffers are len samples long
-sound.mix_s16=function(insraw,outraw,len)
+sound.mix_s16_init=function(len) -- initialise data to this size
+	local data={}
+	for i=1,len do data[i]=0 end -- zero all
+	
+	sound.mix_s16_push=function(buff) -- add this sound buffer to the data
 
--- convert raw data to lua arrays
-	local inslen=#insraw
-	local ins={}
-	local out={}
-	for i=1,inslen do
-		ins[i]=wpack.load_array(insraw[i],"s16",0,len)
+		local t=wpack.load_array(buff,"s16",0,len)
+		for i=1,len do data[i]=data[i]+t[i] end -- add
+		
 	end
+	
+	sound.mix_s16_pull=function(buff) -- save the data into this buffer
 
--- then software mix, all at same volume
-	for idx=1,len do
-		local t=0
-		for i=1,inslen do t=t+ins[i][idx] end
-		out[idx]=t
+		wpack.save_array(data,"s16",0,len,buff)
+
 	end
-
--- then spit it into a buffer, sound clipping problem?
-	wpack.save_array(out,"s16",0,len,outraw)
 
 end
+sound.mix_s16_push=function()end -- sanity
+sound.mix_s16_pull=function()end -- and safety
+
 
 end
 
