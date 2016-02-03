@@ -164,7 +164,7 @@ if sound.dev then
 --		print(sound.packet_size , sound.encode_siz)
 		sound.decode_dat=wpack.copy(sound.encode_dat,sound.encode_siz) -- trim to correct size
 		
-		msg.opus(sound.decode_dat)
+		msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
 
 --		sound.decode_siz=wopus_core.decode(sound.decoder,sound.decode_dat,sound.decode_wav,0)
 

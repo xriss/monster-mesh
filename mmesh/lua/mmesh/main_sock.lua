@@ -47,6 +47,7 @@ sock.setup=function()
 	assert( t:setsockname(opts.host,0) )
 	assert( t:setpeername("fe80::1%"..opts.device,opts.outport) ) -- we want the link local address
 	sock.hostname=t:getsockname()
+	sock.addr=sock.hostname..":"..opts.inport
 	
 --	print( socket.hostname )
 

@@ -64,24 +64,24 @@ end
 
 -- convert a msg into a string and print it
 msg.print=function(m)
-	local s="%16s %8s %8s %16s"
-	local t={"","","",""}
+	local s="%16s %8s %8s %1s %1s %1s %1s %20s"
+	local t={"","","","","","","",""}
 
-	t[1]=msg.str.ip(m._addr or m.from) or "?"
+	t[1]=msg.str.ip(m.from or m._addr) or "?"
 	t[2]=m.cmd
 	t[3]=msg.str.time(m.time) or "????"
 
 	if     m.cmd=="gots" then
 	
-		t[4]=msg.str.ipmember(m.gots) or "?"
+		t[8]=msg.str.ipmember(m.gots) or "?"
 
 	elseif m.cmd=="wants" then
 
-		t[4]=msg.str.ipmember(m.wants) or "?"
+		t[8]=msg.str.ipmember(m.wants) or "?"
 
 	elseif m.cmd=="opus" then
 
-		t[4]="#"..#m.opus
+		t[8]=(m.idx or 0).."#"..(m.opus and #m.opus or 0)
 
 	else
 	
@@ -152,6 +152,7 @@ msg.send_gots=function()
 	local m={}
 	
 	m.cmd="gots"
+	m.from=sock.addr
 	m.time=socket.gettime()
 	m.gots=history.gots()
 	
@@ -176,17 +177,11 @@ msg.opus=function(w)
 	
 	m.idx=msg.opus_idx    -- increment counter, should probably wrap it at 0x7fffffff or something
 	m.time=socket.gettime()     -- local time, probably way out of sync
-	m.from=sock.hostname..":"..opts.inport -- hopefully this is a unique id per device
+	m.from=sock.addr -- hopefully this is a unique id per device
 
 	history.new_opus(m)
 
-	local v={}
-	
-	v.cmd="gots"
-	v.time=socket.gettime()
-	v.gots=history.gots(m.from)
-	
-	sock.send(v)
+	msg.send(m) -- always broadcast locally generated opus msgs
 	
 end
 
