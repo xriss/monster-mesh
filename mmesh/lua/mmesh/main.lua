@@ -107,7 +107,7 @@ M.bake=function(opts,main)
 
 	end
 
-
+local checktime=0
 	function main.serv()
 
 		main.setup()
@@ -115,7 +115,13 @@ M.bake=function(opts,main)
 		print("Starting MMesh loop...")
 		while true do
 			main.update()
-			socket.sleep(0.0001) -- 10khz ish just to keep us idle
+			socket.sleep(0.0001) -- 10khz ish just to keep us mostly idle
+			local t=socket.gettime()
+			local d=t-checktime
+			checktime=t
+			if d>0.1 then
+				print("OVERSLEPT",d)
+			end
 		end
 
 		main.clean()

@@ -30,18 +30,21 @@ M.bake=function(main,sound)
 
 -- configurable defaults
 sound.samplerate=48000
-sound.quality=(sound.samplerate*16)/32
-sound.packet_ms=60
+sound.quality=(sound.samplerate*16)/4	-- opus bitrate, we want audio packets of around about 1k
+sound.packet_ms=40 --60
 sound.packet_size=sound.packet_ms*sound.samplerate/1000
-sound.echo_ms=sound.packet_ms*3
+sound.echo_ms=sound.packet_ms*10 -- sound.packet_ms*3
 sound.echo_size=sound.echo_ms*sound.samplerate/1000
+sound.playback_buffers=math.floor(200/sound.packet_ms)
 
+sound.echo_count=0
 
 sound.setup=function()
 
 	pcall(function()
-		sound.dev=alc.CaptureOpenDevice(nil,sound.samplerate,al.FORMAT_MONO16,16384)
+		sound.dev=alc.CaptureOpenDevice(nil,sound.samplerate,al.FORMAT_MONO16,sound.samplerate*1)
 		alc.CaptureStart(sound.dev)
+		print("CAPTURE START")
 	end)
 	
 --	sound.fft=kissfft.start(sound.fftsiz)
@@ -51,7 +54,7 @@ sound.setup=function()
 	sound.count=0
 	sound.div=1
 	
-	sound.encoder=wopus_core.encoder_create(sound.samplerate,1,nil,sound.quality) -- 1/16th the size seems good quality?
+	sound.encoder=wopus_core.encoder_create(sound.samplerate,1,nil,sound.quality)
 	sound.decoder=wopus_core.decoder_create(sound.samplerate,1)
 	sound.echo   =wopus_core.echo_create(sound.packet_size,sound.echo_size)
 	
@@ -61,6 +64,8 @@ sound.setup=function()
 
 	sound.decode_wav=wpack.alloc(sound.packet_size*2)
 --	sound.decode_dat=wpack.alloc(sound.packet_size*2)
+
+	sound.zero_wav=string.rep("\0",sound.packet_size*2) -- empty wav
 	
 
 
@@ -68,9 +73,8 @@ sound.setup=function()
 	
 	sound.ctx=alc.setup()
 	sound.source=al.GenSource()
-	sound.buffers_empty={al.GenBuffer(),al.GenBuffer(),al.GenBuffer()}
+	sound.buffers_empty={} for i=1,sound.playback_buffers do sound.buffers_empty[i]=al.GenBuffer() end
 	sound.buffers_queue={}
-	sound.wav_queue={}
 	sound.wav_played={}
 
 	al.Listener(al.POSITION, 0, 0, 0)
@@ -118,25 +122,32 @@ sound.update=function()
 
 
 -- remove finished buffers from buffers_queue and place them in buffers_empty
-	for i=1,al.GetSource(sound.source,al.BUFFERS_PROCESSED) do
+	while al.GetSource(sound.source,al.BUFFERS_PROCESSED)>0 do
 		local b=al.SourceUnqueueBuffer(sound.source)
 		local idx
-		for i,v in ipairs(sound.buffers_queue) do -- find and remove, it should be the first one.
+		for i,v in ipairs(sound.buffers_queue) do -- find and remove it
 			if v==b then idx=i break end
 		end
 		assert(idx)
 		table.remove(sound.buffers_queue,idx)
 		table.insert(sound.buffers_empty,b)
 --print("unqueue ",b)
+
 	end
 
--- fill any buffers in buffers_empty with data from sound.wav_queue and then place them in buffers_queue
-	if sound.buffers_empty[1] and sound.wav_queue[1] then -- fill the empty queue
+-- fill any buffers in buffers_empty with data then place them in buffers_queue
+	if sound.buffers_empty[1] then -- fill the empty queue
 		local b=sound.buffers_empty[1]
 		
-		sound.wav_played[#sound.wav_played+1]=sound.wav_queue[1]
-		al.BufferData(b,al.FORMAT_MONO16,sound.wav_queue[1],sound.packet_size*2,sound.samplerate)
-		table.remove(sound.wav_queue,1)
+		sound.mix_s16_init( sound.packet_size )
+		for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
+			sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
+			sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+		end
+		local wav=sound.mix_s16_pull() -- this is our buffer to play
+
+		sound.wav_played[#sound.wav_played+1]=wav -- remember what we played
+		al.BufferData(b,al.FORMAT_MONO16,wav,sound.packet_size*2,sound.samplerate)
 
 		al.SourceQueueBuffer(sound.source,b)
 --print("queue ",b)
@@ -155,92 +166,28 @@ if sound.dev then
 	local c=alc.Get(sound.dev,alc.CAPTURE_SAMPLES) -- check available samples
 	if c>=sound.packet_size then -- we have one packets worth so grab it and encode
 	
+--		if sound.wav_played[1] then -- dont capture unless we have some echos to cancel (we play continuously)
+	
 -- capture some audio
-		alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
-		
-		if sound.wav_played[1] then
--- push the last sound we played into the echo cancellation engine
-			wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,sound.wav_played[1],sound.encode_wav)
-			if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove this used buffer
-			while sound.wav_played[2] do table.remove(sound.wav_played,2) end -- trim the fat so we don't get too far ahead
+			alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
+
+--print("ECHO",c,#sound.wav_played)
+
+			local wav=sound.wav_played[1] or sound.zero_wav -- use last played sound or zero buffer
+			wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,wav,sound.encode_wav)
+			if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove the used buffer
+			while sound.wav_played[4] do table.remove(sound.wav_played,1) end -- and trim the fat so we don't get out of sync
 -- encode to an opus packet with echo cancellation
 			sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat) 
 -- check for encoder errors
 			assert(sound.encode_siz~=-1)
-		else
--- encode to an opus packet without echo cancellation
-			sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav_echo,sound.encode_dat)
--- check for encoder errors
-			assert(sound.encode_siz~=-1)
-		end
 
 -- remember the compressed opus packet and broadcast it	out to anyone listening
-		msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+			msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
 
-
+--		end
 	end
 end
-
-if false then
-	local c=alc.Get(sound.dev,alc.CAPTURE_SAMPLES) -- available samples
-	if c>=sound.packet_size then
-	
-		alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size)
-		wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,sound.wav_played[1] or sound.decode_wav,sound.encode_wav)
-		if sound.wav_played[1] then table.remove(sound.wav_played,1) end
-
---		alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size)
---		wopus_core.echo_capture(sound.echo,sound.encode_wav_echo,sound.encode_wav)
-
-		sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat)
-		assert(sound.encode_siz~=-1)
---		print(sound.packet_size , sound.encode_siz)
-		sound.decode_dat=wpack.copy(sound.encode_dat,sound.encode_siz) -- trim to correct size
-		
-		msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
-
---		sound.decode_siz=wopus_core.decode(sound.decoder,sound.decode_dat,sound.decode_wav,0)
-
---		local wtab,wlen=wpack.load_array( {buffer=sound.decode_wav,sizeof=sound.packet_size*2,offset=0} , "s16")
---print(sound.packet_size,#wtab,wlen)
-
---		sound.wav_queue[ #sound.wav_queue+1 ]=wpack.copy(sound.decode_wav,sound.packet_size*2)
-		
---print("sound in",sound.encode_siz,sound.decode_siz,sound.decode_dat)
-
---[[
-
-local pit={}
-pit.cmd="test"
-pit.data=wpack.tostring(sound.encode_dat,sound.encode_siz)
-pit.count=123
-
-local pd1=(wstr.serialize(pit,{compact=true}))
-local pd2=cmsgpack.pack(pit)
-local pz1=zlib.deflate()(pd1,"finish")
-local pz2=zlib.deflate()(pd2,"finish")
-print((sound.encode_siz),#pd1.." > "..#pz1,#pd2.." > "..#pz2)
-
---print(wstr.serialize( cmsgpack.unpack(pd2) ,{compact=true} ))
-
-]]
-
-	end
-end
-
-	if not sound.wav_queue[1] then -- make sure we always have something ready to push into the play buffers
-
-		sound.mix_s16_init( sound.packet_size )
-		
-		for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
-		
-			sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
-			sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
-			
-		end
-		
-		sound.wav_queue[1]=sound.mix_s16_pull()
-	end
 
 end
 
