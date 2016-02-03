@@ -176,7 +176,7 @@ if sound.dev then
 			local wav=sound.wav_played[1] or sound.zero_wav -- use last played sound or zero buffer
 			wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,wav,sound.encode_wav)
 			if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove the used buffer
-			while sound.wav_played[4] do table.remove(sound.wav_played,1) end -- and trim the fat so we don't get out of sync
+			while sound.wav_played[8] do table.remove(sound.wav_played,1) end -- and trim the fat so we don't get out of sync
 -- encode to an opus packet with echo cancellation
 			sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat) 
 -- check for encoder errors
