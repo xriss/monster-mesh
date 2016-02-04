@@ -172,6 +172,7 @@ if sound.dev then
 			alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
 
 --print("ECHO",c,#sound.wav_played)
+if not sound.wav_played[1] then print("ECHO BUFFER UNDERFLOW") end
 
 			local wav=sound.wav_played[1] or sound.zero_wav -- use last played sound or zero buffer
 			wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,wav,sound.encode_wav)
