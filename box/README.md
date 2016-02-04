@@ -1,33 +1,15 @@
 How to Build an SD card
 =======================
 
-Using Ubuntu/Debian run **ALL** the numbered scripts in this directory one 
-after the other.
+Using Ubuntu/Debian run 00-run-all.sh which will run all the other 
+numbered scripts in this directory one after the other.
 
-eg
+	./00-run-all.sh
 
-	./01-download-and-install.sh
-	
-then
-
-	./02-install.sh
-
-and so on
-
-	./03-initalize-box.sh
-	./04-run-box.sh
-
-at this point the shell will be taken over by a running QEMU box and 
-you will have to continue running the rest of the scripts in another 
-shell.
-
-	./05-setup-box.sh
-	./06-read-only-pi.sh
-
-This will all take some time (hours?) and finally create a fully 
-provisioned monster-mesh.img which can then be written to an SD card 
-and booted on a Raspberry PI. Other useful scripts that can now be run 
-are.
+This will all take some time (about 30mins for me) and finally create a 
+fully provisioned monster-mesh.img which can then be written to an SD 
+card and booted on a Raspberry PI. Other useful scripts that can now be 
+run to further manipulate this image are.
 
 	./box-up
 
@@ -40,4 +22,10 @@ Will stop a QEMU box.
 
 	./ssh
 	
-Will log you into a running QEMU box
+Will log you into the running QEMU box
+
+
+A note on security, the user pi with password raspberry and with your 
+.ssh public key setup to allow passwordless ssh login. So be sure to 
+change the password and remove the .ssh key if you want the image to be 
+secure.

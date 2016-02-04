@@ -176,7 +176,7 @@ if [ "$_IP" ]; then
 fi
 
 #start the monster mesh running in the background
-/home/pi/pi-start-mesh &
+/home/pi/pi-start &
 
 exit 0
 EOF
