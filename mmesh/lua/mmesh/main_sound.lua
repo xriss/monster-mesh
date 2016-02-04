@@ -27,6 +27,7 @@ M.bake=function(main,sound)
 
 	local history = main.rebake("mmesh.main_history")
 	local msg     = main.rebake("mmesh.main_msg")
+	local gpios   = main.rebake("mmesh.main_gpios")
 
 -- configurable defaults
 sound.samplerate=48000
@@ -167,29 +168,30 @@ sound.update=function()
 if sound.dev then
 	local c=alc.Get(sound.dev,alc.CAPTURE_SAMPLES) -- check available samples
 	if c>=sound.packet_size then -- we have one packets worth so grab it and encode
-	
---		if sound.wav_played[1] then -- dont capture unless we have some echos to cancel (we play continuously)
-	
+		
 -- capture some audio
-			alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
+		alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
 
---print("ECHO",c,#sound.wav_played)
-if not sound.wav_played[1] then print("ECHO BUFFER UNDERFLOW") end
+		if not sound.wav_played[1] then print("ECHO BUFFER UNDERFLOW") end
 
-			local wav=sound.wav_played[1] or sound.zero_wav -- use last played sound or zero buffer
-			wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,wav,sound.encode_wav)
-			if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove the used buffer
-			while sound.wav_played[8] do table.remove(sound.wav_played,1) end -- and trim the fat so we don't get out of sync
+		local wav=sound.wav_played[1] or sound.zero_wav -- use last played sound or zero buffer
+		wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,wav,sound.encode_wav)
+		if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove the used buffer
+		while sound.wav_played[8] do table.remove(sound.wav_played,1) end -- and trim the fat so we don't get out of sync
 -- encode to an opus packet with echo cancellation
-			sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat) 
+		sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat) 
 -- check for encoder errors
-			assert(sound.encode_siz~=-1)
+		assert(sound.encode_siz~=-1)
 
 -- remember the compressed opus packet and broadcast it	out to anyone listening
-			if opts.record then
+		if opts.record then
+		
+			if gpios.is_button_down() then -- only record whilst button is pressed
 				msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
 			end
---		end
+		end
+
+
 	end
 end
 

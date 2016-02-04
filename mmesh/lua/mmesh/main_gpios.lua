@@ -136,6 +136,14 @@ gpios.update=function()
 	
 end
 
+gpios.is_button_down=function()
+
+	if not gpios.active then return true end -- always held down
+
+	if gpios.pinS:read() then return true else return false end -- test the real button
+	
+end
+
 	return gpios
 end
 
