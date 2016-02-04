@@ -3,7 +3,9 @@ cd `dirname $0`
 
 echo " Building the mmesh app "
 
-../../bin/gamecake ../mmesh/build.lua
+cd ../mmesh
+../../bin/gamecake ../mmesh/bake.lua
+cd ../box
 
 echo " Copying the mmesh app "
 
