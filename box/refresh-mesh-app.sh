@@ -1,7 +1,7 @@
 cd `dirname $0`
 
 
-./box-up &
+./box-up >/dev/null &
 
 while ! ssh -p 5522 pi@localhost " echo BOX UP "
 do
