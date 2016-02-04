@@ -54,9 +54,7 @@ EOF
 
 echo " disable console blank and raspi logo "
 sudo tee boot/cmdline.txt >/dev/null <<EOF
-
 dwc_otg.lpm_enable=0 console=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait logo.nologo=1 consoleblank=0
-
 EOF
 
 
@@ -178,9 +176,7 @@ if [ "$_IP" ]; then
 fi
 
 #start the monster mesh running in the background
-cd /home/pi/monster-mesh/mmesh
-../box/adhoc-config
-./start &
+/home/pi/pi-start-mesh &
 
 exit 0
 EOF

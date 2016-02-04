@@ -55,7 +55,7 @@ history.remove_old=function()
 
 	history.avail_count=0
 	for addr,v in pairs(history.avail) do
-		if v.time and ( v.time > nowtime+history.avail_lifetime ) then
+		if v.time and ( v.time+history.avail_lifetime <= nowtime ) then
 			history.avail[addr]=nil
 		end
 		history.avail_count=history.avail_count+1
@@ -63,7 +63,7 @@ history.remove_old=function()
 
 	history.play_count=0
 	for addr,v in pairs(history.play) do
-		if v.time and ( v.time > nowtime+history.play_lifetime ) then
+		if v.time and ( v.time+history.play_lifetime <= nowtime ) then
 			history.play[addr]=nil
 		end
 		history.play_count=history.play_count+1
@@ -73,7 +73,7 @@ history.remove_old=function()
 	for addr,tab in pairs(history.opus) do
 		while #tab>history.opus_max do table.remove(tab,1) end
 		for i=#tab,1,-1 do local v=tab[i]
-			if v._time and ( v._time  > nowtime+history.opus_lifetime ) then
+			if v._time and ( v._time+history.opus_lifetime <= nowtime ) then
 				table.remove(tab,i)
 			end
 			history.opus_count=history.opus_count+1
@@ -83,7 +83,7 @@ history.remove_old=function()
 		end
 	end
 
--- print("COUNTS",history.avail_count,history.play_count,history.opus_count)
+ print("COUNTS",history.avail_count,history.play_count,history.opus_count)
 
 end
 
@@ -133,7 +133,7 @@ history.new_opus=function(it)
 		it._time=socket.gettime() -- remember our time stamp, we strip out all _ prefixed data before passing the msg on
 		table.insert(tab,it)
 		table.sort(tab,function(a,b) return a.idx<b.idx end) -- keep table sorted by idx
-		
+--print(tab[1].idx,tab[#tab].idx)
 		while #tab>history.opus_max do table.remove(tab,1) end
 		
 	end
@@ -153,10 +153,10 @@ history.new_gots=function(m)
 				if idx > it.idx then -- only higher indexs count
 					it.idx=idx
 					it.time=nowtime
+					it._ip  =m._ip		-- remember where this data came from
+					it._port=m._port
+					it._addr=m._addr
 				end
-				it._ip  =m._ip		-- remember where this data came from
-				it._port=m._port
-				it._addr=m._addr
 			end
 		end
 	end
@@ -211,7 +211,7 @@ history.get_play_packets=function()
 				end
 
 				for i,v in ipairs(tab) do
-					if v.idx>play.idx then -- found a new idx
+					if v.idx>play.idx then -- found a higher idx
 						table.insert(t,v)
 						play.time=socket.gettime() -- keep alive
 						play.idx=v.idx

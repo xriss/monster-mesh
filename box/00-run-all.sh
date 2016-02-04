@@ -10,6 +10,7 @@ cd `dirname $0`
 
 ./06-box-setup.sh
 ./07-mesh-setup.sh
-./08-box-down.sh
+./08-mesh-app.sh
+./09-box-down.sh
 
 

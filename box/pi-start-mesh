@@ -1,0 +1,15 @@
+cd `dirname $0`
+
+#turn up the volume
+amixer -c0 sset PCM 400
+amixer -c1 sset Mic 16
+
+#setup network
+./adhoc-config
+
+#start broadcasting, this will keep running until you ctrl-c
+./gamecake.raspi ./mmesh.zip
+
+#so run this later to stop it
+#sudo killall gamecake.raspi
+
