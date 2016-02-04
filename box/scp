@@ -1,0 +1,15 @@
+# use this to copy files to the running qemu box or elsewhere if specified
+
+
+if [ -z "$2" ]; then
+
+	echo " Copying $1 to pi@localhost: " 
+	scp -P 5522 $1 pi@localhost:
+
+else
+
+	echo " Copying $1 to $2 " 
+	scp $1 $2
+
+fi
+

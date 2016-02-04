@@ -37,8 +37,8 @@ sleep 1
 ifconfig wlan0
 iwconfig wlan0
 
-sleep 10
+sleep 8
 
 #ping all devices and see who is there
-sudo ping6 -c16 ff02::1%wlan0
+sudo ping6 -c4 ff02::1%wlan0
 

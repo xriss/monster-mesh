@@ -9,8 +9,8 @@ cd ../box
 
 echo " Copying the mmesh app "
 
-scp -P 5522 ./adhoc-config pi@localhost:
-scp -P 5522 ./pi-start pi@localhost:
+./scp ./adhoc-config $1
+./scp ./pi-start $1
 
-scp -P 5522 ../mmesh/out/mmesh.zip pi@localhost:
-scp -P 5522 ../../bin/exe/gamecake.raspi pi@localhost:
+./scp ../mmesh/out/mmesh.zip $1
+./scp ../../bin/exe/gamecake.raspi $1
