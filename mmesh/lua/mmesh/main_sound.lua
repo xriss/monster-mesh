@@ -140,9 +140,11 @@ sound.update=function()
 		local b=sound.buffers_empty[1]
 		
 		sound.mix_s16_init( sound.packet_size )
-		for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
-			sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
-			sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+		if opts.play then
+			for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
+				sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
+				sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+			end
 		end
 		local wav=sound.mix_s16_pull() -- this is our buffer to play
 
@@ -184,8 +186,9 @@ if not sound.wav_played[1] then print("ECHO BUFFER UNDERFLOW") end
 			assert(sound.encode_siz~=-1)
 
 -- remember the compressed opus packet and broadcast it	out to anyone listening
-			msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
-
+			if opts.record then
+				msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+			end
 --		end
 	end
 end
