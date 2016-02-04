@@ -207,7 +207,7 @@ history.get_play_packets=function()
 					play={}
 					history.play[addr]=play
 					play.time=socket.gettime()
-					play.idx=0
+					play.idx=tab[#tab].idx -- start with the oldest one (so we wait for new data)
 				end
 
 				for i,v in ipairs(tab) do
