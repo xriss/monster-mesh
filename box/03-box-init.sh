@@ -95,4 +95,95 @@ proc             /proc           proc    defaults          0       0
 
 EOF
 
+
+#enable built in audio
+sudo tee root/etc/modules >/dev/null <<EOF
+
+# /etc/modules: kernel modules to load at boot time.
+#
+# This file contains the names of kernel modules that should be loaded
+# at boot time, one per line. Lines beginning with "#" are ignored.
+
+snd-bcm2835
+
+EOF
+
+#enable usb mic
+sudo tee root/etc/asound.conf >/dev/null <<EOF
+
+pcm.usb
+{
+    type hw
+    card Device
+}
+
+pcm.internal
+{
+    type hw
+    card ALSA
+}
+
+pcm.!default
+{
+    type asym
+    playback.pcm
+    {
+        type plug
+        slave.pcm "internal"
+    }
+    capture.pcm
+    {
+        type plug
+        slave.pcm "usb"
+    }
+}
+
+ctl.!default
+{
+    type asym
+    playback.pcm
+    {
+        type plug
+        slave.pcm "internal"
+    }
+    capture.pcm
+    {
+        type plug
+        slave.pcm "usb"
+    }
+}
+
+
+EOF
+
+#autorun the monster mesh on startup
+sudo tee root/etc/rc.local >/dev/null <<EOF
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+# Print the IP address
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
+
+#start the monster mesh running in the background
+cd /home/pi/monster-mesh/mmesh
+../box/adhoc-config
+./start &
+
+exit 0
+EOF
+
+
 ./box-umount
