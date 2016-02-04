@@ -29,3 +29,20 @@ A note on security, the user pi with password raspberry and with your
 .ssh public key setup to allow passwordless ssh login. So be sure to 
 change the password and remove the .ssh key if you want the image to be 
 secure.
+
+
+The following scripts can be used on an Ubuntu machine to connect to 
+the monster-mesh network.
+
+	./netmanager-down
+	./adhoc-config
+	
+Will disable netmanger and then configure the mesh using adhoc-config, 
+from now on you will not have wifi internet access but you will have 
+monster-mesh access so can run the mmesh app locally.
+
+	./netmanager-up
+	
+Will disable the adhoc monster-mesh config and log you back into your 
+normal wifi connection handled by netmanager.
+
