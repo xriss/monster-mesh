@@ -128,6 +128,7 @@ history.new_opus=function(it)
 	if it and it.from and it.idx then
 	
 		if history.find(it.from,it.idx) then return end -- already have this packet...
+		if it.from==sock.addr and not it._local then return end -- only we should generate our own packets
 	
 		local tab=history.opus[ it.from ] or {}
 		history.opus[ it.from ]=tab
@@ -151,7 +152,7 @@ history.new_gots=function(m)
 
 	if type(m.gots)=="table" then
 		for addr,idx in pairs( m.gots ) do
-			if type(addr)=="string" and type(idx)=="number" then
+			if type(addr)=="string" and type(idx)=="number" and addr~=sock.addr then -- dont ask for our own packets
 				local it=history.avail[addr] or {idx=0}
 				history.avail[addr]=it
 				if idx > it.idx then -- only higher indexs count

@@ -11,8 +11,8 @@
 #./start --verbose --inport 17072 --outport 17071 --range 3 --play=0 --record=0 &
 #./start --verbose --inport 17073 --outport 17071 --range 3
 
-./start --verbose --inport 17072 --outport 17071 --play=1 --record=1 &
-./start --verbose --inport 17071 --outport 17072 --play=1 --record=1
+./start --verbose --inport 17072 --outport 17071 --play=1 --record=0 --echo=0 &
+./start --verbose --inport 17071 --outport 17072 --play=0 --record=1 --echo=0
 
 
 # the last one blocks so ctrl-c will run the following to clean them all up

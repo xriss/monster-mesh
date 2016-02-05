@@ -51,6 +51,7 @@ M.bake=function(opts,main)
 	opts.outport =tonumber(opts.outport)  or 17071
 	opts.range   =tonumber(opts.range)    or 1
 
+	opts.echo  =tonumber(opts.echo    or 1 ) ~= 0 -- use 0 to turn off
 	opts.record=tonumber(opts.record  or 1 ) ~= 0 -- use 0 to turn off
 	opts.play  =tonumber(opts.play    or 1 ) ~= 0 -- use 0 to turn off
 

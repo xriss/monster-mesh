@@ -148,23 +148,32 @@ sound.update=function()
 -- fill any buffers in buffers_empty with data then place them in buffers_queue
 	if sound.buffers_empty[1] then -- fill the empty queue
 		local b=sound.buffers_empty[1]
+		local wav
 		
-		sound.mix_s16_init( sound.packet_size )
-		if opts.play then
-			for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
-			
-				sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
-				sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+		if (not opts.echo) or (not gpios.is_button_down())  then -- no echo cancel but, dont play noises except when button is down
 
-				times.inc("mix")
+			sound.mix_s16_init( sound.packet_size )
+			if opts.play then
+				for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
+				
+					sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
+					sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+
+					times.inc("mix")
+				end
 			end
+			wav=sound.mix_s16_pull() -- this is our buffer to play
+			
+		else -- dont play anything just push a zero wave
+			
+			wav=sound.zero_wav
+
 		end
-		local wav=sound.mix_s16_pull() -- this is our buffer to play
-
+		
 		times.inc("queue")
-
 		sound.wav_played[#sound.wav_played+1]=wav -- remember what we played
 		al.BufferData(b,al.FORMAT_MONO16,wav,sound.packet_size*2,sound.samplerate)
+
 
 		al.SourceQueueBuffer(sound.source,b)
 --print("queue ",b)
@@ -185,30 +194,47 @@ if sound.dev then
 		
 -- capture some audio
 		alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
-
 		times.inc("rec")
 
-		if not sound.wav_played[1] then print("ECHO BUFFER UNDERFLOW") end
+		if opts.echo then -- echo cancel
 
-		local wav=sound.wav_played[1] or sound.zero_wav -- use last played sound or zero buffer
-		wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,wav,sound.encode_wav)
-		if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove the used buffer
-		while sound.wav_played[8] do table.remove(sound.wav_played,1) end -- and trim the fat so we don't get out of sync
+			if not sound.wav_played[1] then print("ECHO BUFFER UNDERFLOW") end
+
+			local wav=sound.wav_played[1] or sound.zero_wav -- use last played sound or zero buffer
+			wopus_core.echo_cancel(sound.echo,sound.encode_wav_echo,wav,sound.encode_wav)
+
 -- encode to an opus packet with echo cancellation
-		sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat) 
---?		sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav_echo,sound.encode_dat) 
 -- check for encoder errors
-		assert(sound.encode_siz~=-1)
 
 -- remember the compressed opus packet and broadcast it	out to anyone listening
-		if opts.record then
-		
-			if gpios.is_button_down() then -- only record whilst button is pressed
-				msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+			if opts.record then
+			
+				sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav,sound.encode_dat) 
+				assert(sound.encode_siz~=-1)
+
+				if gpios.is_button_down() then -- only record whilst button is pressed
+					msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+				end
+				
 			end
 			
+		else -- no echo cancel
+
+			if opts.record then
+			
+				sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav_echo,sound.encode_dat) 
+				assert(sound.encode_siz~=-1)
+
+				if gpios.is_button_down() then -- only record whilst button is pressed
+					msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+				end
+				
+			end
+		
 		end
 
+		if sound.wav_played[1] then table.remove(sound.wav_played,1) end -- remove the used buffer
+		while sound.wav_played[8] do table.remove(sound.wav_played,1) end -- and trim the fat so we don't get out of sync
 
 	end
 end

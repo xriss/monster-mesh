@@ -8,7 +8,7 @@ amixer -c1 sset Mic 16
 ./adhoc-config
 
 #start broadcasting, this will keep running until you ctrl-c
-./gamecake.raspi ./mmesh.zip
+./gamecake.raspi ./mmesh.zip --echo=0
 
 #so run this later to stop it
 #sudo killall gamecake.raspi
