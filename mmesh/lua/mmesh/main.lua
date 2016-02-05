@@ -135,7 +135,7 @@ local checktime=0
 			socket.sleep(0.0001) -- 10khz ish just to keep us mostly idle
 			
 			local d=times.stop("main")
-			if d>0.1 then
+			if d>0.001 then
 				print( string.format("****OVERSLEPT**** main=%0.4f msg=%0.4f sock=%0.4f gpios=%0.4f sound=%0.4f:(u=%d,m=%d,q=%d,r=%d) ",
 					times.last("main") , times.last("msg") , times.last("sock") , times.last("gpios") , times.last("sound") ,
 					times.count("unqueue") , times.count("mix") , times.count("queue") , times.count("rec") ) )

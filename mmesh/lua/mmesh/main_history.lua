@@ -85,7 +85,7 @@ history.remove_old=function()
 		end
 	end
 
- print("COUNTS",history.avail_count,history.play_count,history.opus_count)
+ print(string.format("COUNTS cansee=%d playing=%d total sound packets=%d",history.avail_count,history.play_count,history.opus_count))
 
 end
 
