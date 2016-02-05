@@ -38,7 +38,7 @@ sound.packet_ms=60 --60
 sound.packet_size=sound.packet_ms*sound.samplerate/1000
 sound.echo_ms=sound.packet_ms*3
 sound.echo_size=sound.echo_ms*sound.samplerate/1000
-sound.playback_buffers=math.floor(150/sound.packet_ms)
+sound.playback_buffers=math.floor(200/sound.packet_ms)
 
 sound.echo_count=0
 
@@ -145,26 +145,30 @@ sound.update=function()
 
 	end
 
--- fill any buffers in buffers_empty with data then place them in buffers_queue
-	if sound.buffers_empty[1] then -- fill the empty queue
+-- fill any buffers_empty with data then place them in buffers_queue
+	while sound.buffers_empty[1] do -- fill the empty queue
 		local b=sound.buffers_empty[1]
 		local wav
 		
-		if (not opts.echo) or (not gpios.is_button_down())  then -- no echo cancel but, dont play noises except when button is down
+		sound.mix_s16_init( sound.packet_size )
+		if opts.play then
+			for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
 
-			sound.mix_s16_init( sound.packet_size )
-			if opts.play then
-				for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
+				local play=history.play[v.from] -- get current play info
+
+				sound.decode_siz=wopus_core.decode(play.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
+				sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+
+--				sound.mix_s16_push( v.opus ) -- and add it to the mix
+
+				times.inc("mix")
 				
-					sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
-					sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
-
-					times.inc("mix")
-				end
 			end
-			wav=sound.mix_s16_pull() -- this is our buffer to play
-			
-		else -- dont play anything just push a zero wave
+		end
+--		wav=wav or sound.zero_wav
+		wav=sound.mix_s16_pull() -- this is our buffer to play
+
+		if (not opts.echo) and (gpios.is_button_down())  then -- no echo cancel but, dont play noises except when button is up
 			
 			wav=sound.zero_wav
 
@@ -214,6 +218,7 @@ if sound.dev then
 
 				if gpios.is_button_down() then -- only record whilst button is pressed
 					msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+--					msg.opus(wpack.tostring(sound.encode_wav,sound.packet_size*2))
 				end
 				
 			end
@@ -222,11 +227,14 @@ if sound.dev then
 
 			if opts.record then
 			
-				sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav_echo,sound.encode_dat) 
-				assert(sound.encode_siz~=-1)
+--				sound.encode_siz=wopus_core.encode(sound.encoder,sound.encode_wav_echo,sound.encode_dat) 
+--				assert(sound.encode_siz~=-1)
 
 				if gpios.is_button_down() then -- only record whilst button is pressed
 					msg.opus(wpack.tostring(sound.encode_dat,sound.encode_siz))
+--					msg.opus(wpack.tostring(sound.encode_wav_echo,sound.packet_size*2))
+--				else
+--print("skip rec")
 				end
 				
 			end

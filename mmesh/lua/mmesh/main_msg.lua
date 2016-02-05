@@ -70,6 +70,8 @@ msg.print=function(m)
 	elseif m.cmd=="opus" then
 
 		t[8]=(m.idx or 0).."#"..(m.opus and #m.opus or 0)
+		
+--		return
 
 	else
 	
@@ -92,7 +94,7 @@ end
 -- we can handle pulse style repetitive actions here
 msg.time_1s=0
 msg.time_500ms=0
-msg.time_200ms=0
+msg.time_100ms=0
 msg.update=function()
 
 	local nowtime=socket.gettime()
@@ -110,8 +112,8 @@ msg.update=function()
 		
 	end
 
-	if nowtime>=msg.time_200ms+0.2 then -- every 200ms
-		msg.time_200ms=nowtime
+	if nowtime>=msg.time_100ms+0.1 then -- every 100ms
+		msg.time_100ms=nowtime
 		
 		msg.send_wants()
 		
@@ -121,14 +123,14 @@ end
 
 -- check what we have and whats available
 -- then send out our gots and wants
-msg.send_wants=function()
+msg.send_wants=function(wants)
 
 	local m={}
 	
 	m.cmd="wants"
 	m.from=sock.addr
 	m.time=socket.gettime()
-	m.wants=history.wants()
+	m.wants=wants or history.wants()
 	
 	if m.wants then
 		sock.send(m)

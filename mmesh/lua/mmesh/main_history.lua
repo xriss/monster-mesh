@@ -6,6 +6,8 @@ local socket=require("socket")
 local cmsgpack = require("cmsgpack")       
 local wstr     = require("wetgenes.string")
 
+local wopus_core=require("wetgenes.opus.core")
+
 
 local function dprint(a) print(wstr.dump(a)) end
 
@@ -18,6 +20,7 @@ M.bake=function(main,history)
 
 	local msg     = main.rebake("mmesh.main_msg")
 	local sock    = main.rebake("mmesh.main_sock")
+	local sound   = main.rebake("mmesh.main_sound")
 
 -- info about currently playing sources, ie the last sound we made
 -- indexed by source name
@@ -67,6 +70,7 @@ history.remove_old=function()
 	for addr,v in pairs(history.play) do
 		if v.time and ( v.time+history.play_lifetime <= nowtime ) then
 			history.play[addr]=nil
+			wopus_core.decoder_destroy(v.decoder)
 		end
 		history.play_count=history.play_count+1
 	end
@@ -192,7 +196,17 @@ history.wants=function(from)
 		local play=history.play[addr]
 		local avail=history.avail[addr]
 		local opus_idx=history.max(addr) or 0		
-		if play and play.idx > opus_idx then opus_idx=play.idx end
+		if play and play.idx > opus_idx then
+			opus_idx=play.idx
+		else
+			opus_idx=play.idx
+			for i=play.idx+1,opus_idx do
+				if not history.find(addr,i) then -- need to ask for holes to be filled
+					opus_idx=i-1
+					break
+				end
+			end
+		end
 		
 		if avail then -- check availability
 
@@ -221,15 +235,29 @@ history.get_play_packets=function()
 					history.play[addr]=play
 					play.time=socket.gettime()
 					play.idx=tab[#tab].idx -- start with the oldest one (so we wait for new data)
+					
+					play.decoder=wopus_core.decoder_create(sound.samplerate,1)
 				end
 
+				local r
 				for i,v in ipairs(tab) do
 					if v.idx>play.idx then -- found a higher idx
-						table.insert(t,v)
-						play.time=socket.gettime() -- keep alive
-						play.idx=v.idx
+						r=v
 						break
 					end
+				end
+				if r then
+--					if r.idx==play.idx+1 or ((play.time+0.5)<socket.gettime()) then -- play the next one if its 1s in the future or its the one we expect
+
+if r.idx~=play.idx+1 then
+print("NOPLAY ",play.idx+1)				
+end
+						table.insert(t,r)
+						play.time=socket.gettime() -- keep alive
+						play.idx=r.idx
+--					else
+--print("NOPLAY ",play.idx+1)				
+--					end
 				end
 			end
 		end
