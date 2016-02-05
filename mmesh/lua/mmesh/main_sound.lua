@@ -25,6 +25,8 @@ M.bake=function(main,sound)
 	local sound=sound or {}
 	sound.modname=M.modname
 
+	local times=main.times
+
 	local history = main.rebake("mmesh.main_history")
 	local msg     = main.rebake("mmesh.main_msg")
 	local gpios   = main.rebake("mmesh.main_gpios")
@@ -122,6 +124,11 @@ sound.update=function()
 	if not sound.active then return end
 
 
+	times.start("unqueue")
+	times.start("mix")
+	times.start("queue")
+	times.start("rec")
+
 -- remove finished buffers from buffers_queue and place them in buffers_empty
 	while al.GetSource(sound.source,al.BUFFERS_PROCESSED)>0 do
 		local b=al.SourceUnqueueBuffer(sound.source)
@@ -134,6 +141,8 @@ sound.update=function()
 		table.insert(sound.buffers_empty,b)
 --print("unqueue ",b)
 
+		times.inc("unqueue")
+
 	end
 
 -- fill any buffers in buffers_empty with data then place them in buffers_queue
@@ -143,11 +152,16 @@ sound.update=function()
 		sound.mix_s16_init( sound.packet_size )
 		if opts.play then
 			for i,v in ipairs( history.get_play_packets() ) do -- find all new packets to play
+			
 				sound.decode_siz=wopus_core.decode(sound.decoder, v.opus ,sound.decode_wav,0) -- decode the packet
 				sound.mix_s16_push( sound.decode_wav ) -- and add it to the mix
+
+				times.inc("mix")
 			end
 		end
 		local wav=sound.mix_s16_pull() -- this is our buffer to play
+
+		times.inc("queue")
 
 		sound.wav_played[#sound.wav_played+1]=wav -- remember what we played
 		al.BufferData(b,al.FORMAT_MONO16,wav,sound.packet_size*2,sound.samplerate)
@@ -171,6 +185,8 @@ if sound.dev then
 		
 -- capture some audio
 		alc.CaptureSamples(sound.dev,sound.encode_wav_echo,sound.packet_size) -- get
+
+		times.inc("rec")
 
 		if not sound.wav_played[1] then print("ECHO BUFFER UNDERFLOW") end
 

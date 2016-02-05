@@ -134,11 +134,12 @@ local checktime=0
 			socket.sleep(0.0001) -- 10khz ish just to keep us mostly idle
 			
 			local d=times.stop("main")
-			times.start("main")
 			if d>0.1 then
-				print( string.format("****OVERSLEPT**** main=%0.4f msg=%0.4f sock=%0.4f sound=%0.4f gpios=%0.4f",
-					times.last("main") , times.last("msg") , times.last("sock") , times.last("sound") , times.last("gpios") ) )
+				print( string.format("****OVERSLEPT**** main=%0.4f msg=%0.4f sock=%0.4f gpios=%0.4f sound=%0.4f:(u=%d,m=%d,q=%d,r=%d) ",
+					times.last("main") , times.last("msg") , times.last("sock") , times.last("gpios") , times.last("sound") ,
+					times.count("unqueue") , times.count("mix") , times.count("queue") , times.count("rec") ) )
 			end
+			times.start("main")
 		end
 
 		main.clean()
@@ -146,9 +147,13 @@ local checktime=0
 	end
 
 
-
 times.start=function(name)
+	times["count_"..name]=0
 	times["start_"..name]=socket.gettime()
+end
+
+times.inc=function(name)
+	times["count_"..name]=(times["count_"..name] or 0) + 1
 end
 
 times.stop=function(name)
@@ -158,6 +163,10 @@ end
 
 times.last=function(name)
 	return (times["stop_"..name] or 0) - (times["start_"..name] or 0)
+end
+
+times.count=function(name)
+	return (times["count_"..name] or 0)
 end
 
 	return main
