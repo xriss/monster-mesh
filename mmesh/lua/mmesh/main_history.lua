@@ -17,25 +17,27 @@ M.bake=function(main,history)
 	history.modname=M.modname
 
 	local msg     = main.rebake("mmesh.main_msg")
+	local sock    = main.rebake("mmesh.main_sock")
 
 -- info about currently playing sources, ie the last sound we made
 -- indexed by source name
 	history.play={}
 	history.play_count=0
-	history.play_lifetime=64 -- how long do we keep these entries alive 
+	history.play_lifetime=16 -- how long do we keep these entries alive 
 
 -- our history of opus packets that we can play and or pass on to others
 -- indexed by source name
 	history.opus={}
 	history.opus_count=0
-	history.opus_lifetime=48 -- how long do we keep these entries alive 
+	history.opus_lifetime=8 -- how long do we keep these entries alive 
 	history.opus_max=64       -- maximum entries to keep for each addr (much more restrictive than lifetime)
 
 -- info about currently available sources and from who they are available
 -- indexed by source name
 	history.avail={}
 	history.avail_count=0
-	history.avail_lifetime=32 -- how long do we keep these entries alive 
+	history.avail_lifetime=8 -- how long do we keep these entries alive 
+
 
 
 history.setup=function()
@@ -143,6 +145,8 @@ end
 -- update the availablity from this host
 history.new_gots=function(m)
 
+	if m.from == sock.addr then return end -- ignore self gots so we can forget what we know
+
 	local nowtime=socket.gettime()
 
 	if type(m.gots)=="table" then
@@ -183,11 +187,19 @@ history.wants=function(from)
 
 	local r={}
 	local count=0
-	for addr,it in pairs( history.avail ) do
-		local mx=history.max(addr) or 0
-		if it.idx > mx then
-			r[addr]=mx+1
-			count=count+1
+	for addr,it in pairs( history.play ) do
+		local play=history.play[addr]
+		local avail=history.avail[addr]
+		local opus_idx=history.max(addr) or 0		
+		if play and play.idx > opus_idx then opus_idx=play.idx end
+		
+		if avail then -- check availability
+
+			if opus_idx < avail.idx then -- something we want?
+				r[addr]=opus_idx+1
+				count=count+1
+			end
+
 		end
 	end
 	if count>0 then return r end

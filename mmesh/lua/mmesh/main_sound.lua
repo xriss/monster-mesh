@@ -36,7 +36,7 @@ sound.packet_ms=60 --60
 sound.packet_size=sound.packet_ms*sound.samplerate/1000
 sound.echo_ms=sound.packet_ms*5
 sound.echo_size=sound.echo_ms*sound.samplerate/1000
-sound.playback_buffers=math.floor(240/sound.packet_ms)
+sound.playback_buffers=math.floor(300/sound.packet_ms)
 
 sound.echo_count=0
 
