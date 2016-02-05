@@ -14,6 +14,9 @@ local M={ modname=(...) } ; package.loaded[M.modname]=M
 M.bake=function(opts,main)
 	main=main or {}
 	main.modname=M.modname
+
+	local times={}
+	main.times=times
 	
 	local t={} -- process command line opts
 	local lastkey
@@ -102,10 +105,21 @@ M.bake=function(opts,main)
 	main.update=function()
 
 
+		times.start("msg")
 		msg.update()
+		times.stop("msg")
+
+		times.start("sock")
 		sock.update()
+		times.stop("sock")
+
+		times.start("sound")
 		sound.update()
+		times.stop("sound")
+
+		times.start("gpios")
 		gpios.update()
+		times.stop("gpios")
 
 	end
 
@@ -118,11 +132,12 @@ local checktime=0
 		while true do
 			main.update()
 			socket.sleep(0.0001) -- 10khz ish just to keep us mostly idle
-			local t=socket.gettime()
-			local d=t-checktime
-			checktime=t
+			
+			local d=times.stop("main")
+			times.start("main")
 			if d>0.1 then
-				print("OVERSLEPT",d)
+				print( string.format("****OVERSLEPT**** main=%0.4f msg=%0.4f sock=%0.4f sound=%0.4f gpios=%0.4f",
+					times.last("main") , times.last("msg") , times.last("sock") , times.last("sound") , times.last("gpios") ) )
 			end
 		end
 
@@ -131,6 +146,19 @@ local checktime=0
 	end
 
 
+
+times.start=function(name)
+	times["start_"..name]=socket.gettime()
+end
+
+times.stop=function(name)
+	times["stop_"..name]=socket.gettime()
+	return times.last(name)
+end
+
+times.last=function(name)
+	return (times["stop_"..name] or 0) - (times["start_"..name] or 0)
+end
 
 	return main
 end
