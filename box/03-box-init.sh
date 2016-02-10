@@ -175,8 +175,10 @@ if [ "$_IP" ]; then
   printf "My IP address is %s\n" "$_IP"
 fi
 
-#start the monster mesh running in the background
+#run /home/pi/pi-start as root at startup if it exists
+if [ -f /home/pi/pi-start ] ; then
 /home/pi/pi-start &
+fi
 
 exit 0
 EOF
